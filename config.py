@@ -1,0 +1,9 @@
+MONGODB_HOST = '127.0.0.1'
+MONGODB_PORT = 27017
+MONGODB_DB = 'taobao'
+MONGODB_COLLECTION = 'yeevar'
+KEYWORD = '伊婉'
+DAZHONG_DB = 'dianping'
+DAZHONG_COLLECTION = 'yeevar'
+YUEMEI_DB = 'yuemei'
+YUEMEI_COLLECTION = 'yuemei'

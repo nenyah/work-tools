@@ -1,0 +1,11 @@
+__pycache__/*
+__pycache__
+node_modules/*
+*.pdf
+*.png
+package-lock.json
+.vscode/settings.json
+.vscode/.ropeproject/config.py
+.vscode/.ropeproject/objectdb
+debug.log
+demo.py

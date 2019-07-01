@@ -1,16 +1,19 @@
 #! /usr/bin/env python
 # -*- coding:utf-8 -*-
 
-import csv
-import datetime
+from datetime import datetime
 import logging
 import os
 import random
 import sys
 import time
 
+import pandas as pd
+import pymongo
 import requests
 from lxml import etree
+
+from config import MONGODB_HOST, MONGODB_PORT, YUEMEI_COLLECTION, YUEMEI_DB
 
 logging.basicConfig(
     level=logging.INFO, format='%(asctime)s - %(levelname)s- %(message)s')
@@ -23,39 +26,33 @@ def clean_text(text):
 
 
 cookies = {
-    'yuemei_city':
-    'ningbo',
-    '_yma':
-    '1555318329897',
-    'YUEMEI':
-    'ai0r6hu55qhpchrptjbmkv4gt6',
-    'Hm_lvt_bbb28c93aca8fe7e95a44b2908aabce7':
-    '1555318329',
-    'ym_onlyk':
-    '1555318327550995',
-    'ym_onlyknew':
-    '15553183275564',
-    'UM_distinctid':
-    '16a203250f6aea-02d813782b2869-9333061-1fa400-16a203250f7adf',
-    'CNZZDATA1253703185':
-    '1448280659-1555315070-https%253A%252F%252Fwww.yuemei.com%252F%7C1555315070',
-    'Hm_lpvt_bbb28c93aca8fe7e95a44b2908aabce7':
-    '1555318560',
+    'Hm_lvt_bbb28c93aca8fe7e95a44b2908aabce7': '1560909709',
+    'ym_onlyk': '1560909707979701',
+    'ym_onlyknew': '15609097079822',
+    '_yma': '1560909709802',
+    'YUEMEI': 'enjl9bc870p4oggmt1lmp551l6',
+    'acw_tc': '2760820815609954808364573e57d3193f25259be9e37baace9d9c1ff3c193',
+    'yuemei_city': 'ningbo',
+    'Hm_lpvt_bbb28c93aca8fe7e95a44b2908aabce7': '1560995593',
 }
 
 headers = {
     'Connection':
     'keep-alive',
+    'Cache-Control':
+    'max-age=0',
     'Upgrade-Insecure-Requests':
     '1',
+    'User-Agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
+        (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36',
     'DNT':
     '1',
-    'User-Agent':
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.121 Safari/537.36',
     'Accept':
-    'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+    'text/html,application/xhtml+xml,application/xml;q=0.9,\
+        image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
     'Referer':
-    'https://so.yuemei.com/tao/%E4%BC%8A%E5%A9%89/city/all/p2.html',
+    'https://so.yuemei.com/tao/%E4%BC%8A%E5%A9%89/city/all/',
     'Accept-Encoding':
     'gzip, deflate, br',
     'Accept-Language':
@@ -64,7 +61,7 @@ headers = {
 
 
 class YueMeiSpider:
-    """docstring for YueMeiSpider"""
+    """悦美爬虫"""
 
     def __init__(self, keyword):
         self.root = r'https://so.yuemei.com'
@@ -75,11 +72,17 @@ class YueMeiSpider:
             for i in range(1, 36)
         ]
         self.detail_url = set()
-        self.item = []
+
         self.count = 0
-        self.item_count = 0
+
+        self.client = pymongo.MongoClient(MONGODB_HOST, MONGODB_PORT)
+        self.db = self.client[YUEMEI_DB]
+        self.collection = self.db[YUEMEI_COLLECTION]
+        self.date = datetime.today().strftime('%Y-%m-%d')
+        self.file = self.get_file_path()
 
     def __get(self, url):
+        """随机延时下载数据"""
         try:
             log(f'[+] {self.count:4d} Start to get {url}')
             r = requests.get(url, headers=headers, cookies=cookies)
@@ -87,11 +90,12 @@ class YueMeiSpider:
             r.encoding = 'utf-8'
             self.count += 1
             return r.text
-        except:
+        except Exception:
             log("Can't get page", url)
             return None
 
     def parse_url(self, response):
+        """解析列表目录的详情地址"""
         tree = etree.HTML(response)
         urls = tree.xpath('//a[contains(@class,"taoItem")]/@href')
         for url in urls:
@@ -107,28 +111,34 @@ class YueMeiSpider:
         #     self.parse_url(self.__get(next_page_url))
 
     def parse_detal(self, url):
-        log(f'[+] {self.item_count:4d} Start to parse {url}')
+        """解析详情内容"""
+        log(f'[+] Start to parse {url}')
         response = self.__get(url)
-        if response:
-            tree = etree.HTML(response)
-            title = self.__get_title(tree)
-            price = self.__get_price(tree)
-            link = url
-            address = self.__get_address(tree)
-            hospital = self.__get_hospital(tree)
-            phone = self.__get_phone(tree)
-            info = {
-                'title': title,
-                'price': price,
-                'link': link,
-                'address': address,
-                'hospital': hospital,
-                'phone': phone
-            }
-            self.item.append(info)
-            self.item_count += 1
+        try:
+            if response:
+                tree = etree.HTML(response)
+                title = self.__get_title(tree)
+                price = self.__get_price(tree)
+                link = url
+                address = self.__get_address(tree)
+                hospital = self.__get_hospital(tree)
+                phone = self.__get_phone(tree)
+                info = {
+                    'title': title,
+                    'price': price,
+                    'link': link,
+                    'address': address,
+                    'hospital': hospital,
+                    'phone': phone,
+                    'crawl_date': self.date
+                }
+                log(info)
+                self.save_to_mongodb(info)
+        except Exception:
+            pass
 
     def __get_title(self, tree):
+        """获取标题"""
         if tree is None:
             raise Exception("Null exception", tree)
 
@@ -137,6 +147,7 @@ class YueMeiSpider:
         return title
 
     def __get_price(self, tree):
+        """获取价格"""
         if tree is None:
             raise Exception("Null exception", tree)
         price_node = tree.xpath(
@@ -148,6 +159,7 @@ class YueMeiSpider:
             raise Exception("Null exception", tree)
 
     def __get_address(self, tree):
+        """获取地址"""
         if tree is None:
             raise Exception("Null exception", tree)
         pat1 = '//p[@class="item3"]/text()'
@@ -160,6 +172,7 @@ class YueMeiSpider:
         return None
 
     def __get_hospital(self, tree):
+        """获取医院名"""
         if tree is None:
             raise Exception("Null exception", tree)
         hospital_node = tree.xpath('//p[@class="item1"]/a/text()')
@@ -169,6 +182,7 @@ class YueMeiSpider:
         return None
 
     def __get_phone(self, tree):
+        """获取电话号码"""
         if tree is None:
             raise Exception("Null exception", tree)
         phone_node = tree.xpath('//div[@class="hosInfo"]/p[last()]/text()')
@@ -178,34 +192,42 @@ class YueMeiSpider:
         return None
 
     def crawl(self):
+        """爬虫运行主体"""
         for url in self.page_urls:
             self.parse_url(self.__get(url))
         while len(self.detail_url):
             detail_url = self.detail_url.pop()
             self.parse_detal(detail_url)
+        self.out_to_csv(self.date, self.file)
 
-    def show_item(self):
-        for item in self.item:
-            log(item)
+    def save_to_mongodb(self, result):
+        """存储数据到数据库"""
+        try:
+            res = self.collection.update_one({
+                "link": result["link"]
+            }, {"$set": result},
+                                             upsert=True)
+            if res.matched_count or res.upserted_id:
+                log(f'[+] 存储到数据成功')
+        except Exception:
+            log(f'[+] 存储到数据库失败')
 
-    def save(self, save_path):
-        log(f'[+] Total downlaod: {self.count}')
-        log(f'[+] Total item: {self.item_count}')
+    def out_to_csv(self, date, file):
+        """从数据库导出数据到csv"""
+        df = pd.DataFrame(self.collection.find())
+        df = df[df['crawl_date'] == date]
+        df.to_csv(file)
 
-        file = datetime.datetime.today().strftime('%Y-%m-%d') + \
-            f'{self.keyword}悦美销售情况.csv'
-        path = os.path.join(save_path, file)
-        log(f'[+] Start to save file to {path}')
-        with open(path, "w+", newline='', encoding='utf-8') as csvfile:
-            fieldnames = [
-                'title', 'price', 'link', 'address', 'hospital', 'phone'
-            ]
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    def get_file_path(self):
+        """根据不同系统生成文件存储路径"""
+        if os.name == 'nt':
+            save_path = r'E:\玻尿酸销售情况'
+        else:
+            save_path = '/home/steven/sales_collect'
+        file_name = f'{self.date}伊婉悦美销售状况.csv'
 
-            writer.writeheader()
-            for row in self.item:
-                writer.writerow(row)
-        log('[+] Save success')
+        file_path = os.path.join(save_path, file_name)
+        return file_path
 
 
 def main():
@@ -217,13 +239,9 @@ def main():
         keyword = '伊婉'
     else:
         keyword = sys.argv[1]
-    if os.name == 'nt':
-        save_path = r'E:\玻尿酸销售情况'
-    else:
-        save_path = '/home/steven/sales_collect'
+
     spider = YueMeiSpider(keyword)
     spider.crawl()
-    spider.save(save_path)
 
 
 if __name__ == '__main__':
