@@ -1,4 +1,5 @@
 import random
+import sys
 import time
 from datetime import datetime
 
@@ -100,12 +101,12 @@ def get_goods():
         print("获取商品失败")
 
 
-def save_to_mongodb(result):
+def save_to_mongodb(info):
     try:
-        if collection.insert_one(result):
-            print("存储到数据成功", result)
+        if collection.insert_one(info):
+            print("存储到数据成功", info)
     except Exception:
-        print("存储到数据库失败", result)
+        print("存储到数据库失败", info)
 
 
 def out_to_csv(date, file):
@@ -130,6 +131,10 @@ def main():
     out_to_csv(today, file)
 
     browser.close()
+    try:
+        sys.exit(0)
+    except Exception:
+        print('异常退出')
 
 
 if __name__ == '__main__':

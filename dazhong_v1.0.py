@@ -104,8 +104,8 @@ def get_detail(url):
             'phone': get_el(tree, '//*[@class="shop-phone"]/text()')[0],
             'crawl_date': datetime.today().strftime('%Y-%m-%d')
         }
-        print('>>> 解析结果：')
-        print(info)
+        print('>>> 解析成功')
+        # print(info)
         save_to_mongodb(info)
         # return info
 
@@ -138,10 +138,14 @@ def out_to_csv(date, file):
 
 def main():
     cityid = [2, 1, 4, 7, 10, 3, 5, 6, 8, 16, 9, 17]
-    city_ids = cityid[:]
+    city_ids = cityid[2:]
     for cid in city_ids:
         for info in get_link(cid):
-            get_detail(info['link'])
+            try:
+                get_detail(info['link'])
+            except Exception:
+                print(f">>> {info['link']}解析出错！！！")
+
     today = datetime.today().strftime('%Y-%m-%d')
     file = f'E:/玻尿酸销售情况/{today}伊婉点评销售状况.csv'
     out_to_csv(today, file)
