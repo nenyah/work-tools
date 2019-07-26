@@ -25,21 +25,21 @@ driver.close()
 
 headers = {
     'Connection':
-    'keep-alive',
+        'keep-alive',
     'Cache-Control':
-    'max-age=0',
+        'max-age=0',
     'Upgrade-Insecure-Requests':
-    '1',
+        '1',
     'User-Agent':
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36',
     'DNT':
-    '1',
+        '1',
     'Accept':
-    'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+        'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
     'Accept-Encoding':
-    'gzip, deflate',
+        'gzip, deflate',
     'Accept-Language':
-    'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
+        'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
 }
 
 params = (
@@ -77,18 +77,18 @@ def parse_data(data):
                 if '伊婉' in deal['title']:
                     info = {
                         'link':
-                        'https://www.meituan.com/jiankangliren/' + str(
-                            item['id']),
+                            'https://www.meituan.com/jiankangliren/' + str(
+                                item['id']),
                         'hospital_name':
-                        item['title'],
+                            item['title'],
                         'title':
-                        deal['title'],
+                            deal['title'],
                         'price':
-                        deal['price'],
+                            deal['price'],
                         'address':
-                        item['address'],
+                            item['address'],
                         'city':
-                        item['city']
+                            item['city']
                     }
                     yield info
 

@@ -14,7 +14,7 @@ headers = {
     'Connection': "keep-alive",
     'cache-control': "no-cache",
     'Postman-Token': "a421a56e-c748-4d7c-9a9c-23281f00cb31"
-    }
+}
 
 conn.request("GET", "/searchNew/product", headers=headers)
 

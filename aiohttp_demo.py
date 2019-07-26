@@ -2,9 +2,10 @@
 异步方式爬取当当畅销书的图书信息
 '''
 
-import time
-import aiohttp
 import asyncio
+import time
+
+import aiohttp
 import pandas as pd
 from bs4 import BeautifulSoup
 
@@ -20,7 +21,6 @@ async def fetch(session, url):
 
 # 解析网页
 async def parser(html):
-
     # 利用BeautifulSoup将获取到的文本解析成HTML
     soup = BeautifulSoup(html, "lxml")
     # 获取网页中的畅销书信息
@@ -28,7 +28,6 @@ async def parser(html):
         'ul', class_="bang_list clearfix bang_list_mode")('li')
 
     for book in book_list:
-
         info = book.find_all('div')
 
         # 获取每本畅销书的排名，名称，评论数，作者，出版社
@@ -52,10 +51,8 @@ async def download(url):
 
 
 # 全部网页
-urls = [
-    'http://bang.dangdang.com/books/bestsellers/01.00.00.00.00.00-recent7-0-0-1-%d'
-    % i for i in range(1, 26)
-]
+root = 'http://bang.dangdang.com/books/bestsellers/'
+urls = [root + '01.00.00.00.00.00-recent7-0-0-1-%d' % i for i in range(1, 26)]
 
 # 统计该爬虫的消耗时间
 print('#' * 50)

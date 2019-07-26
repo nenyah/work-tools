@@ -24,27 +24,27 @@ my_cookie = {}
 for el in cookies:
     my_cookie[el['name']] = el['value']
 print(my_cookie)
-driver.close()
+driver.quit()
 
 headers = {
     'Connection':
-    'keep-alive',
+        'keep-alive',
     'Cache-Control':
-    'max-age=0',
+        'max-age=0',
     'Upgrade-Insecure-Requests':
-    '1',
+        '1',
     'User-Agent':
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
-        (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
+            (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36',
     'DNT':
-    '1',
+        '1',
     'Accept':
-    'text/html,application/xhtml+xml,application/xml;q=0.9,\
-        image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+        'text/html,application/xhtml+xml,application/xml;q=0.9,\
+            image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
     'Accept-Encoding':
-    'gzip, deflate, br',
+        'gzip, deflate, br',
     'Accept-Language':
-    'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
+        'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
 }
 
 
@@ -123,7 +123,7 @@ def save_to_mongodb(result):
         res = collection.update_one({
             "link": result["link"]
         }, {"$set": result},
-                                    upsert=True)
+            upsert=True)
         if res.matched_count or res.upserted_id:
             print(">>> 存储到数据成功")
     except Exception:
@@ -132,13 +132,16 @@ def save_to_mongodb(result):
 
 def out_to_csv(date, file):
     df = pd.DataFrame(collection.find())
-    df = df[df['crawl_date'] == date]
-    df.to_csv(file)
+    df = df[df['crawl_date'] == date][[
+        'addr', 'crawl_date', 'hospital_name', 'link', 'phone', 'price',
+        'title'
+    ]]
+    df.to_csv(file, index=False)
 
 
 def main():
     cityid = [2, 1, 4, 7, 10, 3, 5, 6, 8, 16, 9, 17]
-    city_ids = cityid[2:]
+    city_ids = cityid[:]
     for cid in city_ids:
         for info in get_link(cid):
             try:

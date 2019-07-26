@@ -1,4 +1,5 @@
 import re
+
 import requests
 from lxml import html
 
@@ -9,7 +10,6 @@ from lxml import html
 # 这个地方是动态的，每次都要重新抓取一下
 # .ztkrgv {  background: -523.0px -51.0px; }  编写正则表达式
 def get_css_position(css_name, css_url):
-
     css_positon_html = requests.get(css_url).text
 
     str_css = (r'%s{background:-(\d+).0px -(\d+).0px' % css_name)

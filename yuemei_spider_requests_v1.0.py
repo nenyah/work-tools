@@ -1,12 +1,12 @@
 #! /usr/bin/env python
 # -*- coding:utf-8 -*-
 
-from datetime import datetime
 import logging
 import os
 import random
 import sys
 import time
+from datetime import datetime
 
 import pandas as pd
 import pymongo
@@ -38,25 +38,25 @@ cookies = {
 
 headers = {
     'Connection':
-    'keep-alive',
+        'keep-alive',
     'Cache-Control':
-    'max-age=0',
+        'max-age=0',
     'Upgrade-Insecure-Requests':
-    '1',
+        '1',
     'User-Agent':
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
-        (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
+            (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36',
     'DNT':
-    '1',
+        '1',
     'Accept':
-    'text/html,application/xhtml+xml,application/xml;q=0.9,\
-        image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+        'text/html,application/xhtml+xml,application/xml;q=0.9,\
+            image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
     'Referer':
-    'https://so.yuemei.com/tao/%E4%BC%8A%E5%A9%89/city/all/',
+        'https://so.yuemei.com/tao/%E4%BC%8A%E5%A9%89/city/all/',
     'Accept-Encoding':
-    'gzip, deflate, br',
+        'gzip, deflate, br',
     'Accept-Language':
-    'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
+        'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
 }
 
 
@@ -206,7 +206,7 @@ class YueMeiSpider:
             res = self.collection.update_one({
                 "link": result["link"]
             }, {"$set": result},
-                                             upsert=True)
+                upsert=True)
             if res.matched_count or res.upserted_id:
                 log(f'[+] 存储到数据成功')
         except Exception:
@@ -215,8 +215,11 @@ class YueMeiSpider:
     def out_to_csv(self, date, file):
         """从数据库导出数据到csv"""
         df = pd.DataFrame(self.collection.find())
-        df = df[df['crawl_date'] == date]
-        df.to_csv(file)
+        df = df[df['crawl_date'] == date][[
+            'address', 'crawl_date', 'hospital', 'link', 'phone', 'price',
+            'title'
+        ]]
+        df.to_csv(file, index=False)
 
     def get_file_path(self):
         """根据不同系统生成文件存储路径"""

@@ -1,9 +1,8 @@
 import asyncio
+import logging
 
 import aiohttp
 from bs4 import BeautifulSoup
-
-import logging
 
 
 class AsnycGrab(object):
@@ -16,7 +15,7 @@ class AsnycGrab(object):
     def __parse_results(self, url, html):
 
         try:
-            soup = BeautifulSoup(html, 'html.parser')
+            soup = BeautifulSoup(html, 'lxml')
             title = soup.find('title').get_text()
         except Exception as e:
             raise e

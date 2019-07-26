@@ -1,5 +1,4 @@
 import random
-import sys
 import time
 from datetime import datetime
 
@@ -54,16 +53,15 @@ def search(KEYWORD):
 
 def next_page(page_number):
     print("正在换页", page_number)
+    submit_pat = "#mainsrp-pager > div > div > div > div.form > span.btn.J_Submit"
     try:
         input = wait.until(
             EC.presence_of_element_located(
                 (By.CSS_SELECTOR,
                  "#mainsrp-pager > div > div > div > div.form > input")))
+
         submit = wait.until(
-            EC.element_to_be_clickable((
-                By.CSS_SELECTOR,
-                "#mainsrp-pager > div > div > div > div.form > span.btn.J_Submit"
-            )))
+            EC.element_to_be_clickable((By.CSS_SELECTOR, submit_pat)))
         input.clear()
         input.send_keys(page_number)
         submit.click()
@@ -111,8 +109,12 @@ def save_to_mongodb(info):
 
 def out_to_csv(date, file):
     df = pd.DataFrame(collection.find())
-    df = df[df['crawl_date'] == date]
-    df.to_csv(file)
+    df = df[df['crawl_date'] == date][[
+        'crawl_date', 'deal', 'img', 'location', 'pid', 'price', 'shop',
+        'title'
+    ]]
+    df['link'] = 'https://detail.tmall.com/item.htm?id=' + df['pid']
+    df.to_csv(file, index=False)
 
 
 def main():
@@ -130,11 +132,7 @@ def main():
 
     out_to_csv(today, file)
 
-    browser.close()
-    try:
-        sys.exit(0)
-    except Exception:
-        print('异常退出')
+    browser.quit()
 
 
 if __name__ == '__main__':
