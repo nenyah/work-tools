@@ -9,3 +9,8 @@ package-lock.json
 .vscode/.ropeproject/objectdb
 debug.log
 demo.py
+.idea/
+
+.idea/work-tools.iml
+.idea/workspace.xml
+.vscode/launch.json

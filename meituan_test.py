@@ -2,8 +2,8 @@
 @Description: 美团数据采集
 @Author: Steven
 @Date: 2019-12-06 16:15:49
-@LastEditors  : Please set LastEditors
-@LastEditTime : 2019-12-23 14:13:22
+@LastEditors: Steven
+@LastEditTime: 2019-12-09 09:08:06
 '''
 import csv
 import datetime
@@ -21,9 +21,10 @@ file = f'{_path}/{today}{KEYWORD}美团销售情况.csv'
 
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument('--log-level=3')
-chrome_options.add_experimental_option('excludeSwitches',
-                                       ['enable-automation'])
+chrome_options.add_experimental_option(
+    'excludeSwitches', ['enable-automation'])
 driver = webdriver.Chrome(chrome_options=chrome_options)
+
 
 driver.get("http://nb.meituan.com/")
 cookies = driver.get_cookies()
@@ -34,32 +35,33 @@ print(my_cookies)
 driver.close()
 
 cookies = {
-    'uuid': '453d5f2247124e7c831e.1575940189.1.0.0',
-    '_lxsdk_cuid':
-    '16eed5afef2c8-041df37fdce01c-4c302a7b-1fa400-16eed5afef3c8',
-    '_lxsdk_s': '16eed5afef4-b95-61f-e0d%7C%7C35',
+    'uuid': '6f810ad1c4fb494aa841.1575594096.1.0.0',
+    '_lxsdk_cuid': '16ed8ba0341c8-087a97ce95c10c-7711b3e-1fa400-16ed8ba0341c8',
     'ci': '1',
     'rvct': '1',
+    '_lxsdk_s': '16eda194ea6-86e-255-e9d%7C%7C302',
 }
 
 headers = {
-    'User-Agent':
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:71.0) Gecko/20100101 Firefox/71.0',
-    'Accept': '*/*',
-    'Accept-Language':
-    'zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2',
-    'Referer': 'https://bj.meituan.com/s/%E4%BC%8A%E5%A9%89/',
-    'Origin': 'https://bj.meituan.com',
     'Connection': 'keep-alive',
+    'Origin': 'https://bj.meituan.com',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.87 Safari/537.36',
+    'DNT': '1',
+    'Accept': '*/*',
+    'Sec-Fetch-Site': 'same-site',
+    'Sec-Fetch-Mode': 'cors',
+    'Referer': 'https://bj.meituan.com/s/%E4%BC%8A%E5%A9%89/',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Accept-Language': 'zh-CN,zh;q=0.9',
 }
-proxies = {'http': 'http://104.129.183.20:1024'}
+
 LIMIT_NUM = 32
 
 
 def get_data(url: str, OFFSET: int = 0):
 
     params = (
-        ('uuid', cookies['uuid']),
+        ('uuid', my_cookies['uuid']),
         ('userid', '-1'),
         ('limit', str(LIMIT_NUM)),
         ('offset', str(OFFSET)),
@@ -67,10 +69,8 @@ def get_data(url: str, OFFSET: int = 0):
         ('q', '\u4F0A\u5A49'),
     )
     try:
-        web = requests.get(url,
-                           headers=headers,
-                           params=params,
-                           cookies=cookies)
+        web = requests.get(
+            url, headers=headers, params=params, cookies=my_cookies)
         # print(web.url)
         data = web.json()
         print(len(data))
@@ -79,13 +79,13 @@ def get_data(url: str, OFFSET: int = 0):
         raise e
 
 
-def parse_total(data: dict):
+def parse_total(data):
     if data is None:
         raise 'None error'
     return data['totalCount']
 
 
-def parse_data(data: dict):
+def parse_data(data):
     if data is None:
         raise 'None error'
 
@@ -97,18 +97,18 @@ def parse_data(data: dict):
                 if '伊婉' in deal['title']:
                     info = {
                         'link':
-                        'https://www.meituan.com/jiankangliren/' +
-                        str(item['id']),
+                            'https://www.meituan.com/jiankangliren/' + str(
+                                item['id']),
                         'hospital_name':
-                        item['title'],
+                            item['title'],
                         'title':
-                        deal['title'],
+                            deal['title'],
                         'price':
-                        deal['price'],
+                            deal['price'],
                         'address':
-                        item['address'],
+                            item['address'],
                         'city':
-                        item['city']
+                            item['city']
                     }
                     yield info
 
@@ -132,9 +132,9 @@ def main():
             url, data = get_data(url)
             total = parse_total(data)
             page = math.ceil(total / LIMIT_NUM)
-            for p in range(page):
+            for p in range(page+1):
                 # 4. 获取更新数据
-                url, data = get_data(url, p * LIMIT_NUM)
+                url, data = get_data(url, p*LIMIT_NUM)
                 print(len(data))
                 # 5. 解析数据
                 for el in parse_data(data):

@@ -16,6 +16,7 @@ collection = db[DAZHONG_COLLECTION]
 
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument('--log-level=3')
+chrome_options.add_experimental_option('excludeSwitches',['enable-automation'])
 driver = webdriver.Chrome(chrome_options=chrome_options)
 
 driver.get("http://www.dianping.com/ningbo")

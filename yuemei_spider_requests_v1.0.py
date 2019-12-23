@@ -63,7 +63,7 @@ headers = {
 class YueMeiSpider:
     """悦美爬虫"""
 
-    def __init__(self, keyword):
+    def __init__(self, keyword: str):
         self.root = r'https://so.yuemei.com'
         self.keyword = keyword
         self.start_url = self.root + '/tao/' + self.keyword
@@ -81,7 +81,7 @@ class YueMeiSpider:
         self.date = datetime.today().strftime('%Y-%m-%d')
         self.file = self.get_file_path()
 
-    def __get(self, url):
+    def __get(self, url: str) -> str:
         """随机延时下载数据"""
         try:
             log(f'[+] {self.count:4d} Start to get {url}')
@@ -94,7 +94,7 @@ class YueMeiSpider:
             log("Can't get page", url)
             return None
 
-    def parse_url(self, response):
+    def parse_url(self, response: str):
         """解析列表目录的详情地址"""
         tree = etree.HTML(response)
         urls = tree.xpath('//a[contains(@class,"taoItem")]/@href')
@@ -110,7 +110,7 @@ class YueMeiSpider:
         #     next_page_url = self.root + next_url[0]
         #     self.parse_url(self.__get(next_page_url))
 
-    def parse_detal(self, url):
+    def parse_detal(self, url: str):
         """解析详情内容"""
         log(f'[+] Start to parse {url}')
         response = self.__get(url)
@@ -137,7 +137,7 @@ class YueMeiSpider:
         except Exception:
             pass
 
-    def __get_title(self, tree):
+    def __get_title(self, tree: etree.Element):
         """获取标题"""
         if tree is None:
             raise Exception("Null exception", tree)
@@ -146,7 +146,7 @@ class YueMeiSpider:
         title = clean_text(title_parent.xpath('string(.)'))
         return title
 
-    def __get_price(self, tree):
+    def __get_price(self, tree: etree.Element):
         """获取价格"""
         if tree is None:
             raise Exception("Null exception", tree)
@@ -158,7 +158,7 @@ class YueMeiSpider:
         else:
             raise Exception("Null exception", tree)
 
-    def __get_address(self, tree):
+    def __get_address(self, tree: etree.Element):
         """获取地址"""
         if tree is None:
             raise Exception("Null exception", tree)
@@ -171,7 +171,7 @@ class YueMeiSpider:
             return address
         return None
 
-    def __get_hospital(self, tree):
+    def __get_hospital(self, tree: etree.Element):
         """获取医院名"""
         if tree is None:
             raise Exception("Null exception", tree)
@@ -181,7 +181,7 @@ class YueMeiSpider:
             return hospital
         return None
 
-    def __get_phone(self, tree):
+    def __get_phone(self, tree: etree.Element):
         """获取电话号码"""
         if tree is None:
             raise Exception("Null exception", tree)
@@ -200,7 +200,7 @@ class YueMeiSpider:
             self.parse_detal(detail_url)
         self.out_to_csv(self.date, self.file)
 
-    def save_to_mongodb(self, result):
+    def save_to_mongodb(self, result: dict):
         """存储数据到数据库"""
         try:
             res = self.collection.update_one({
@@ -212,7 +212,7 @@ class YueMeiSpider:
         except Exception:
             log(f'[+] 存储到数据库失败')
 
-    def out_to_csv(self, date, file):
+    def out_to_csv(self, date: str, file: str):
         """从数据库导出数据到csv"""
         df = pd.DataFrame(self.collection.find())
         df = df[df['crawl_date'] == date][[

@@ -34,9 +34,9 @@ class MailSender:
         self.smtp.login(user, pwd)
 
     def add_attachment(self, filename):
-        '''
+        """
             添加附件
-        '''
+        """
         attr_name = Path(filename).parts[-1]
         att = MIMEBase('application', 'octet-stream')
         att.set_payload(open(filename, 'rb').read())
@@ -49,9 +49,9 @@ class MailSender:
         self._attachments.append(att)
 
     def send(self, subject, content, to_addr):
-        '''
+        """
             发送邮件
-        '''
+        """
         msg = MIMEMultipart('alternative')
         contents = MIMEText(content, "html", _charset='utf-8')
         msg['Subject'] = subject
@@ -83,8 +83,8 @@ def check_latest_file(p, today):
 def main(date=''):
     user = os.environ.get('EMAIL_NAME')
     pwd = os.environ.get('EMAIL_PWD')
-    to_addr = '366138476@qq.com,chengencong@huadongbio.com'
-    smtpSvr = 'smtp.exmail.qq.com'
+    to_addr = '366138476@qq.com,guyuqing@huadongbio.com'
+    smtp_svr = 'smtp.exmail.qq.com'
     content = '请查看附件'
 
     if date == '':
@@ -98,7 +98,7 @@ def main(date=''):
         p = Path("/home/steven/sales_collect")
 
     subject = today + '伊婉销售情况'
-    m = MailSender(smtpSvr, 25)
+    m = MailSender(smtp_svr, 25)
     m.login(user, pwd)
     for file in p.glob('*.csv'):
         if today in file.name:

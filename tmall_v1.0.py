@@ -14,6 +14,7 @@ from config import MONGODB_COLLECTION, MONGODB_DB, MONGODB_HOST, MONGODB_PORT
 
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument('--log-level=3')
+chrome_options.add_experimental_option('excludeSwitches',['enable-automation'])
 browser = webdriver.Chrome(chrome_options=chrome_options)
 wait = WebDriverWait(browser, 10)
 
