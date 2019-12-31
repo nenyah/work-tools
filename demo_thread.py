@@ -2,8 +2,8 @@
 @Description: 线程示例
 @Author: Steven
 @Date: 2019-11-15 10:28:24
-@LastEditors: Steven
-@LastEditTime: 2019-11-15 10:31:15
+@LastEditors  : Steven
+@LastEditTime : 2019-12-31 09:21:42
 '''
 import time
 import threading
@@ -31,9 +31,9 @@ def demo():
 
     time.sleep(20)
 
-    print('进程A%s' % ('还在工作中' if A.isAlive() else '已经结束工作',))
-    print('进程B%s' % ('还在工作中' if B.isAlive() else '已经结束工作',))
-    print('进程C%s' % ('还在工作中' if C.isAlive() else '已经结束工作',))
+    print('进程A%s' % ('还在工作中' if A.is_alive() else '已经结束工作', ))
+    print('进程B%s' % ('还在工作中' if B.is_alive() else '已经结束工作', ))
+    print('进程C%s' % ('还在工作中' if C.is_alive() else '已经结束工作', ))
 
     print('下班了。。。')
 

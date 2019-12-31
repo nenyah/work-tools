@@ -16,8 +16,9 @@ collection = db[DAZHONG_COLLECTION]
 
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument('--log-level=3')
-chrome_options.add_experimental_option('excludeSwitches',['enable-automation'])
-driver = webdriver.Chrome(chrome_options=chrome_options)
+chrome_options.add_experimental_option('excludeSwitches',
+                                       ['enable-automation'])
+driver = webdriver.Chrome(options=chrome_options)
 
 driver.get("http://www.dianping.com/ningbo")
 cookies = driver.get_cookies()
@@ -28,24 +29,17 @@ print(my_cookie)
 driver.quit()
 
 headers = {
-    'Connection':
-        'keep-alive',
-    'Cache-Control':
-        'max-age=0',
-    'Upgrade-Insecure-Requests':
-        '1',
+    'Connection': 'keep-alive',
+    'Cache-Control': 'max-age=0',
+    'Upgrade-Insecure-Requests': '1',
     'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
             (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36',
-    'DNT':
-        '1',
-    'Accept':
-        'text/html,application/xhtml+xml,application/xml;q=0.9,\
+    'DNT': '1',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,\
             image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
-    'Accept-Encoding':
-        'gzip, deflate, br',
-    'Accept-Language':
-        'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Accept-Language': 'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
 }
 
 
@@ -121,10 +115,8 @@ def get_el(tree, rule):
 
 def save_to_mongodb(result):
     try:
-        res = collection.update_one({
-            "link": result["link"]
-        }, {"$set": result},
-            upsert=True)
+        res = collection.update_one({"link": result["link"]}, {"$set": result},
+                                    upsert=True)
         if res.matched_count or res.upserted_id:
             print(">>> 存储到数据成功")
     except Exception:

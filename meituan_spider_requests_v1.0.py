@@ -2,8 +2,8 @@
 @Description: 美团数据采集
 @Author: Steven
 @Date: 2019-12-06 16:15:49
-@LastEditors  : Please set LastEditors
-@LastEditTime : 2019-12-23 14:13:22
+@LastEditors  : Steven
+@LastEditTime : 2019-12-31 09:38:18
 '''
 import csv
 import datetime
@@ -23,13 +23,11 @@ chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument('--log-level=3')
 chrome_options.add_experimental_option('excludeSwitches',
                                        ['enable-automation'])
-driver = webdriver.Chrome(chrome_options=chrome_options)
+driver = webdriver.Chrome(options=chrome_options)
 
 driver.get("http://nb.meituan.com/")
 cookies = driver.get_cookies()
-my_cookies = {}
-for el in cookies:
-    my_cookies[el['name']] = el['value']
+my_cookies = {el['name']: el['value'] for el in cookies}
 print(my_cookies)
 driver.close()
 
@@ -43,8 +41,8 @@ cookies = {
 }
 
 headers = {
-    'User-Agent':
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:71.0) Gecko/20100101 Firefox/71.0',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:71.0) \
+         Gecko/20100101 Firefox/71.0',
     'Accept': '*/*',
     'Accept-Language':
     'zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2',
@@ -91,7 +89,7 @@ def parse_data(data: dict):
 
     items = data['searchResult']
     for item in items:
-        print(item)
+        # print(item)
         if item['deals']:
             for deal in item['deals']:
                 if '伊婉' in deal['title']:

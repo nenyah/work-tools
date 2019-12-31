@@ -1,12 +1,17 @@
 '''
-异步方式爬取当当畅销书的图书信息
+@Description: 异步方式爬取当当畅销书的图书信息
+@Author: Steven
+@Date: 2019-07-25 15:11:43
+@LastEditors  : Steven
+@LastEditTime : 2019-12-31 09:17:55
 '''
 
 import asyncio
 import time
 
-import aiohttp
 import pandas as pd
+
+import aiohttp
 from bs4 import BeautifulSoup
 
 # table表格用于储存书本信息
@@ -24,8 +29,8 @@ async def parser(html):
     # 利用BeautifulSoup将获取到的文本解析成HTML
     soup = BeautifulSoup(html, "lxml")
     # 获取网页中的畅销书信息
-    book_list = soup.find(
-        'ul', class_="bang_list clearfix bang_list_mode")('li')
+    book_list = soup.find('ul',
+                          class_="bang_list clearfix bang_list_mode")('li')
 
     for book in book_list:
         info = book.find_all('div')
@@ -65,8 +70,8 @@ tasks = asyncio.gather(*tasks)
 loop.run_until_complete(tasks)
 
 # 将table转化为pandas中的DataFrame并保存为CSV格式的文件
-df = pd.DataFrame(
-    table, columns=['rank', 'name', 'comments', 'author', 'publisher'])
+df = pd.DataFrame(table,
+                  columns=['rank', 'name', 'comments', 'author', 'publisher'])
 df.to_csv('E://douban/dangdang.csv', index=False)
 
 t2 = time.time()  # 结束时间

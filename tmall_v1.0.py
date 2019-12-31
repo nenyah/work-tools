@@ -14,8 +14,9 @@ from config import MONGODB_COLLECTION, MONGODB_DB, MONGODB_HOST, MONGODB_PORT
 
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument('--log-level=3')
-chrome_options.add_experimental_option('excludeSwitches',['enable-automation'])
-browser = webdriver.Chrome(chrome_options=chrome_options)
+chrome_options.add_experimental_option('excludeSwitches',
+                                       ['enable-automation'])
+browser = webdriver.Chrome(options=chrome_options)
 wait = WebDriverWait(browser, 10)
 
 client = pymongo.MongoClient(MONGODB_HOST, MONGODB_PORT)
@@ -79,8 +80,8 @@ def next_page(page_number):
 def get_goods():
     try:
         wait.until(
-            EC.presence_of_element_located((By.CSS_SELECTOR,
-                                            '#mainsrp-itemlist .items .item')))
+            EC.presence_of_element_located(
+                (By.CSS_SELECTOR, '#mainsrp-itemlist .items .item')))
         html = browser.page_source
         doc = pq(html)
         items = doc('#mainsrp-itemlist .items .item').items()

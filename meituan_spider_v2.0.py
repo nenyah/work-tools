@@ -2,8 +2,8 @@
 @Description:
 @Author: Steven
 @Date: 2019-12-06 09:53:05
-@LastEditors: Steven
-@LastEditTime: 2019-12-06 16:11:18
+@LastEditors  : Steven
+@LastEditTime : 2019-12-31 16:58:36
 '''
 import io
 import sys
@@ -24,14 +24,8 @@ class MeiTuanItem:
     :param address: 地址
     :param city: 城市
     """
-
-    def __init__(self,
-                 hospital: str,
-                 link: str,
-                 title: str,
-                 price: str,
-                 address: str,
-                 city: str):
+    def __init__(self, hospital: str, link: str, title: str, price: str,
+                 address: str, city: str):
         self.hospital = hospital
         self.link = link
         self.title = title
@@ -43,7 +37,6 @@ class MeiTuanItem:
 class ItemWriter:
     """负责将帖子列表写入到文件
     """
-
     def __init__(self, fp: io.TextIOBase, title: str):
         self.fp = fp
         self.title = title
@@ -72,9 +65,12 @@ class MTSpider:
         'Cache-Control': 'max-age=0',
         'DNT': '1',
         'Upgrade-Insecure-Requests': '1',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.87 Safari/537.36',
+        'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
+            (KHTML, like Gecko) Chrome/78.0.3904.87 Safari/537.36'                                                                  ,
         'Sec-Fetch-User': '?1',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,\
+            image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3'                                                                             ,
         'Sec-Fetch-Site': 'same-site',
         'Sec-Fetch-Mode': 'navigate',
         'Referer': 'https://www.meituan.com/',
@@ -89,32 +85,35 @@ class MTSpider:
     def fetch(self) -> Generator[MeiTuanItem, None, None]:
         """从 MT 抓取 伊婉 内容
         """
-        resp = requests.get(
-            self.ITEMS_URL, headers=self.HEADERS, cookies=self.cookies)
+        resp = requests.get(self.ITEMS_URL,
+                            headers=self.HEADERS,
+                            cookies=self.cookies)
 
         print(resp.status_code)
         # print(resp.text)
         html = etree.HTML(resp.text)
-        items = html.xpath('//*[@class="list-item-desc"]')
+        items = html.xpath('//div[@class="list-item-desc-top"]')
         for item in items:
-            node_title = item.xpath(
-                './div[@class="list-item-desc-top"]/a')[0]
+            node_title = item.xpath('./a')[0]
             address_text = item.xpath(
                 './/span[@class="address ellipsis"]/text()')[0]
-            node_deal = item.xpath('./div/div/a[@class="link deal-content"]')
+            node_deal = item.xpath(
+                './following-sibling::div[2]//a[@class="link deal-content"]')
 
             for deal in node_deal:
                 title_text = deal.xpath(
-                    './div/span/span[@class="hlt-span"]/text()')
+                    './/span[contains(@class,"hlt-span")]/text()')
                 price_text = deal.xpath(
-                    './div/span[@class="deal-price"]/text()')[0]
-                yield MeiTuanItem(
-                    hospital=node_title.text,
-                    link=node_title.get('href'),
-                    title='伊婉'.join(title_text),
-                    price=price_text,
-                    address=address_text,
-                    city='北京')
+                    './/span[@class="deal-price"]/text()')[0]
+
+                    
+                print(title_text, price_text)
+                yield MeiTuanItem(hospital=node_title.text,
+                                  link=node_title.get('href'),
+                                  title=''.join(title_text),
+                                  price=price_text,
+                                  address=address_text,
+                                  city='北京')
 
     def write_to_file(self, fp: io.TextIOBase):
         """以纯文本格式将 Item 内容写入文件
@@ -127,15 +126,13 @@ class MTSpider:
     def get_cookie(self) -> dict:
         options = webdriver.ChromeOptions()
         options.add_argument('--log-level=3')
-        options.add_experimental_option(
-            'excludeSwitches', ['enable-automation'])
-        driver = webdriver.Chrome(chrome_options=options)
+        options.add_experimental_option('excludeSwitches',
+                                        ['enable-automation'])
+        driver = webdriver.Chrome(options=options)
 
         driver.get("http://nb.meituan.com/")
         cookies = driver.get_cookies()
-        my_cookie = {}
-        for el in cookies:
-            my_cookie[el['name']] = el['value']
+        my_cookie = {el['name']: el['value'] for el in cookies}
         print(my_cookie)
         driver.close()
         return my_cookie
@@ -143,11 +140,6 @@ class MTSpider:
 
 def main():
 
-    # with open('/tmp/hn_top5.txt') as fp:
-    #     crawler = HNTopPostsSpider(fp)
-    #     crawler.write_to_file()
-
-    # 因为 HNTopPostsSpider 接收任何 file-like 的对象，所以我们可以把 sys.stdout 传进去
     # 实现往控制台标准输出打印的功能
     crawler = MTSpider()
     crawler.write_to_file(sys.stdout)
