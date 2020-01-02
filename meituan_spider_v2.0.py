@@ -3,7 +3,7 @@
 @Author: Steven
 @Date: 2019-12-06 09:53:05
 @LastEditors  : Steven
-@LastEditTime : 2019-12-31 16:58:36
+@LastEditTime : 2020-01-02 09:22:43
 '''
 import io
 import sys
@@ -67,10 +67,10 @@ class MTSpider:
         'Upgrade-Insecure-Requests': '1',
         'User-Agent':
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
-            (KHTML, like Gecko) Chrome/78.0.3904.87 Safari/537.36'                                                                  ,
+            (KHTML, like Gecko) Chrome/78.0.3904.87 Safari/537.36',
         'Sec-Fetch-User': '?1',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,\
-            image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3'                                                                             ,
+            image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
         'Sec-Fetch-Site': 'same-site',
         'Sec-Fetch-Mode': 'navigate',
         'Referer': 'https://www.meituan.com/',
@@ -106,7 +106,6 @@ class MTSpider:
                 price_text = deal.xpath(
                     './/span[@class="deal-price"]/text()')[0]
 
-                    
                 print(title_text, price_text)
                 yield MeiTuanItem(hospital=node_title.text,
                                   link=node_title.get('href'),
