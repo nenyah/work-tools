@@ -12,8 +12,8 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from pathlib import Path
 
-logging.basicConfig(
-    level=logging.INFO, format='%(asctime)s - %(levelname)s- %(message)s')
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s- %(message)s')
 
 log = logging.info
 
@@ -40,10 +40,9 @@ class MailSender:
         attr_name = Path(filename).parts[-1]
         att = MIMEBase('application', 'octet-stream')
         att.set_payload(open(filename, 'rb').read())
-        att.add_header(
-            'Content-Disposition',
-            'attachment',
-            filename=('gbk', '', attr_name))
+        att.add_header('Content-Disposition',
+                       'attachment',
+                       filename=('gbk', '', attr_name))
         encoders.encode_base64(att)
 
         self._attachments.append(att)
