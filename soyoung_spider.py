@@ -9,8 +9,10 @@ import itertools
 
 import requests
 
-logging.basicConfig(
-    level=logging.INFO, format='%(asctime)s - %(levelname)s- %(message)s')
+from config import KEYWORD
+
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s- %(message)s')
 log = logging.info
 
 
@@ -20,7 +22,6 @@ def clean_text(text):
 
 class SoyoungSpider:
     """docstring for SoyoungSpider"""
-
     def __init__(self, keyword):
         self.keyword = keyword
         self.root = 'http://www.soyoung.com/searchNew/'
@@ -111,7 +112,7 @@ class SoyoungSpider:
 
 
 def main():
-    keyword = '伊婉'
+    keyword = KEYWORD
     if os.name == 'nt':
         save_path = r'E:\玻尿酸销售情况'
     else:

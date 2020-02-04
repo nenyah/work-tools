@@ -13,8 +13,9 @@ import requests
 from selenium import webdriver
 
 from cityid import hot_city_id as city_id
+from config import KEYWORD
 
-KEYWORD = '伊婉'
+
 _path = r"E:\玻尿酸销售情况"
 today = datetime.date.today()
 file = f'{_path}/{today}{KEYWORD}美团销售情况.csv'

@@ -8,7 +8,8 @@ import requests
 from lxml import etree
 from selenium import webdriver
 
-from config import DAZHONG_COLLECTION, DAZHONG_DB, MONGODB_HOST, MONGODB_PORT
+from config import (DAZHONG_COLLECTION, DAZHONG_DB, MONGODB_HOST, MONGODB_PORT,
+                    KEYWORD)
 
 client = pymongo.MongoClient(MONGODB_HOST, MONGODB_PORT)
 db = client[DAZHONG_DB]
@@ -22,9 +23,7 @@ driver = webdriver.Chrome(options=chrome_options)
 
 driver.get("http://www.dianping.com/ningbo")
 cookies = driver.get_cookies()
-my_cookie = {}
-for el in cookies:
-    my_cookie[el['name']] = el['value']
+my_cookie = {el['name']: el['value'] for el in cookies}
 print(my_cookie)
 driver.quit()
 
@@ -52,7 +51,7 @@ def get_link(cityid=1):
             time.sleep(random.randint(1, 4))
             response = requests.get(
                 f'https://www.dianping.com/search/keyword/{cityid}' +
-                f'/0_%E4%BC%8A%E5%A9%89/p{page}',
+                f'/0_{KEYWORD}/p{page}',
                 headers=headers,
                 cookies=my_cookie)
         except Exception:
@@ -68,7 +67,7 @@ def get_link(cityid=1):
 
             for node in nodes:
                 product_name = node.xpath('./@title')[0]
-                if '伊婉' in product_name and '商品' in product_name:
+                if KEYWORD in product_name and '商品' in product_name:
                     info = {
                         'title': product_name,
                         'link': node.xpath('./@href')[0]
@@ -143,7 +142,7 @@ def main():
                 print(f">>> {info['link']}解析出错！！！")
 
     today = datetime.today().strftime('%Y-%m-%d')
-    file = f'E:/玻尿酸销售情况/{today}伊婉点评销售状况.csv'
+    file = f'E:/玻尿酸销售情况/{today}{KEYWORD}点评销售状况.csv'
     out_to_csv(today, file)
 
 

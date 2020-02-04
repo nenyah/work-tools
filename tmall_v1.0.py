@@ -10,7 +10,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from config import MONGODB_COLLECTION, MONGODB_DB, MONGODB_HOST, MONGODB_PORT
+from config import (MONGODB_COLLECTION, MONGODB_DB, MONGODB_HOST, MONGODB_PORT,
+                    KEYWORD)
 
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument('--log-level=3')
@@ -120,7 +121,6 @@ def out_to_csv(date, file):
 
 
 def main():
-    KEYWORD = '伊婉'
     _path = r"E:\玻尿酸销售情况"
     today = datetime.today().strftime('%Y-%m-%d')
     file = f'{_path}/{today}{KEYWORD}天猫销售情况.csv'

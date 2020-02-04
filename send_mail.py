@@ -12,6 +12,8 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from pathlib import Path
 
+from config import TO_ADDR, NT_PATH, NIX_PATH, KEYWORD, SMTP_SVR
+
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s- %(message)s')
 
@@ -82,8 +84,8 @@ def check_latest_file(p, today):
 def main(date=''):
     user = os.environ.get('EMAIL_NAME')
     pwd = os.environ.get('EMAIL_PWD')
-    to_addr = '366138476@qq.com,guyuqing@huadongbio.com'
-    smtp_svr = 'smtp.exmail.qq.com'
+    to_addr = TO_ADDR
+    smtp_svr = SMTP_SVR
     content = '请查看附件'
 
     if date == '':
@@ -92,11 +94,11 @@ def main(date=''):
         today = date
 
     if os.name == 'nt':
-        p = Path(r"E:\玻尿酸销售情况")
+        p = Path(NT_PATH)
     else:
-        p = Path("/home/steven/sales_collect")
+        p = Path(NIX_PATH)
 
-    subject = today + '伊婉销售情况'
+    subject = f'{today}{KEYWORD}销售情况'
     m = MailSender(smtp_svr, 25)
     m.login(user, pwd)
     for file in p.glob('*.csv'):
