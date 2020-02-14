@@ -10,7 +10,7 @@ import datetime
 import math
 
 import requests
-from selenium import webdriver
+# from selenium import webdriver
 
 from cityid import hot_city_id as city_id
 from config import KEYWORD

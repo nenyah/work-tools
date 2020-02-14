@@ -12,32 +12,30 @@ file = f'{_path}/{today}{KEYWORD}河狸家销售情况.csv'
 
 cookies = {
     'beacon_id':
-        'MTAxLjI1MS4yMTQuMTMwLTVFMjMtNTg4NDY2RTlEMkUxOC0xMw',
+    'MTAxLjI1MS4yMTQuMTMwLTVFMjMtNTg4NDY2RTlEMkUxOC0xMw',
     'search_sort_plan':
-        'rank_new',
+    'rank_new',
     'track':
-        'eyJjb29raWVfaWQiOiIxNTU3MjEwOTY5MTk1NDdndiIsInNlc3Npb25faWQiOjE1NTcyMTI4MzIzMTksInBhZ2Vfc3RlcCI6MSwic2Vzc2lvbl9maXJzdCI6MTU1NzIxMDk2OTE5NCwic2Vzc2lvbl9sYXN0IjoxNTU3MjEwOTY5MTk0LCJzZXNzaW9uX2NvdW50IjoyLCJ2aWV3X2xhc3QiOm51bGwsInZpZXdfdGhpcyI6MTU1NzIxMjg2NTY4NH0%3D',
+    'eyJjb29raWVfaWQiOiIxNTU3MjEwOTY5MTk1NDdndiIsInNlc3Npb25faWQiOjE1NT\
+        cyMTI4MzIzMTksInBhZ2Vfc3RlcCI6MSwic2Vzc2lvbl9maXJzdCI6MTU1NzIxMD\
+            k2OTE5NCwic2Vzc2lvbl9sYXN0IjoxNTU3MjEwOTY5MTk0LCJzZXNzaW9uX2\
+                NvdW50IjoyLCJ2aWV3X2xhc3QiOm51bGwsInZpZXdfdGhpcyI6MTU1Nz\
+                    IxMjg2NTY4NH0%3D',
 }
 
 headers = {
-    'Connection':
-        'keep-alive',
-    'Pragma':
-        'no-cache',
-    'Cache-Control':
-        'no-cache',
-    'Upgrade-Insecure-Requests':
-        '1',
-    'User-Agent':
-        'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.121 Mobile Safari/537.36',
-    'DNT':
-        '1',
-    'Accept':
-        'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-    'Accept-Encoding':
-        'gzip, deflate, br',
-    'Accept-Language':
-        'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
+    'Connection': 'keep-alive',
+    'Pragma': 'no-cache',
+    'Cache-Control': 'no-cache',
+    'Upgrade-Insecure-Requests': '1',
+    'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N)\
+             AppleWebKit / 537.36(KHTML, like Gecko) Chrome / 72.0 .3626 .121\
+                  Mobile Safari/537.36',
+    'DNT': '1',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,\
+        image/webp,image/apng,*/*;q=0.8',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Accept-Language': 'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
 }
 
 
@@ -51,8 +49,10 @@ def get_data(startNum):
     )
     url = 'https://search-api.helijia.com/search-api/search/item_query'
     try:
-        web = requests.get(
-            url, headers=headers, cookies=cookies, params=params)
+        web = requests.get(url,
+                           headers=headers,
+                           cookies=cookies,
+                           params=params)
         data = web.json()
         return web.url, data['data']
     except Exception as e:
@@ -75,7 +75,7 @@ def parse_data(data):
                     'title': el['name'],
                     'price': el['price'],
                     'link':
-                        'https://m.helijia.com/product.html?id=' + el['id'],
+                    'https://m.helijia.com/product.html?id=' + el['id'],
                 }
                 yield info
 
