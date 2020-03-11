@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 '''
 @Description: 美团数据采集
 @Author: Steven
@@ -14,7 +16,6 @@ import requests
 
 from cityid import hot_city_id as city_id
 from config import KEYWORD
-
 
 _path = r"E:\玻尿酸销售情况"
 today = datetime.date.today()
@@ -33,23 +34,25 @@ file = f'{_path}/{today}{KEYWORD}美团销售情况.csv'
 # driver.close()
 
 cookies = {
-    'uuid': '453d5f2247124e7c831e.1575940189.1.0.0',
-    '_lxsdk_cuid':
-    '16eed5afef2c8-041df37fdce01c-4c302a7b-1fa400-16eed5afef3c8',
-    '_lxsdk_s': '16eed5afef4-b95-61f-e0d%7C%7C35',
+    'uuid': 'f424126a28a84a1c9512.1583117027.1.0.0',
+    '_lxsdk_cuid': '1709920ccf8c8-0243b6f1f79d42-c383f64-1fa400-1709920ccf8a6',
     'ci': '1',
     'rvct': '1',
+    '_lxsdk_s': '1709920b301-144-ca1-831%7C%7C108',
 }
 
 headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:71.0) \
-         Gecko/20100101 Firefox/71.0',
-    'Accept': '*/*',
-    'Accept-Language':
-    'zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2',
-    'Referer': 'https://bj.meituan.com/s/%E4%BC%8A%E5%A9%89/',
-    'Origin': 'https://bj.meituan.com',
     'Connection': 'keep-alive',
+    'User-Agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.117 Safari/537.36',
+    'DNT': '1',
+    'Accept': '*/*',
+    'Origin': 'https://bj.meituan.com',
+    'Sec-Fetch-Site': 'same-site',
+    'Sec-Fetch-Mode': 'cors',
+    'Referer': 'https://bj.meituan.com/s/%20%E4%BC%8A%E5%A9%89/',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Accept-Language': 'zh-CN,zh;q=0.9',
 }
 proxies = {'http': 'http://104.129.183.20:1024'}
 LIMIT_NUM = 32

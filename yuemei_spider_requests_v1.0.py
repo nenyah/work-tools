@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 # -*- coding:utf-8 -*-
 
 import logging
@@ -59,10 +59,8 @@ class YueMeiSpider:
         self.root = r'https://so.yuemei.com'
         self.keyword = keyword
         self.start_url = self.root + '/tao/' + self.keyword
-        self.page_urls = [
-            self.root + f'/tao/{self.keyword}/city/all/p{i}.html'
-            for i in range(1, 36)
-        ]
+        self.page_urls = (self.root + f'/tao/{self.keyword}/city/all/p{i}.html'
+                          for i in range(1, 36))
         self.detail_url = set()
 
         self.count = 0

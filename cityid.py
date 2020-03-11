@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 city_id = {"151": "鞍山",
            "197": "安庆",
            "238": "安阳",

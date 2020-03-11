@@ -1,5 +1,6 @@
-#! python3
-# coding:utf-8
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 # tmall.py 天猫采集
 import csv
 import datetime

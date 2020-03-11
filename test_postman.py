@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import http.client
 
 conn = http.client.HTTPConnection("www.soyoung.com")
