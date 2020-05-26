@@ -101,16 +101,30 @@
 #     time.sleep(1)
 #     alive.value = False
 
-from multiprocessing import Pool
+# from multiprocessing import Pool
+
+# def f(x):
+#     return x * x
+
+# if __name__ == '__main__':
+#     with Pool(processes=4) as pool:
+#         multiple_results = [pool.apply_async(f, (i, )) for i in range(4)]
+#         print([res.get() for res in multiple_results])
+#         pool.close()
+#         pool.join()
 
 
-def f(x):
-    return x * x
+class TestDemo:
+    i: int = 1
+    d: float = 1.0
+    b: bool = True
+
+    def __init__(self, i: int, d: float, b: bool) -> None:
+        self.i = i
+        self.d = d
+        self.b = b
 
 
-if __name__ == '__main__':
-    with Pool(processes=4) as pool:
-        multiple_results = [pool.apply_async(f, (i, )) for i in range(4)]
-        print([res.get() for res in multiple_results])
-        pool.close()
-        pool.join()
+# a: TestDemo = TestDemo(2, 2.0, False)
+print(TestDemo.i, TestDemo.d, TestDemo.b)
+# print(a.i, a.d, a.b)

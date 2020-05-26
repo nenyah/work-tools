@@ -21,7 +21,7 @@ chrome_options.add_argument('--log-level=3')
 chrome_options.add_experimental_option('excludeSwitches',
                                        ['enable-automation'])
 browser = webdriver.Chrome(options=chrome_options)
-wait = WebDriverWait(browser, 10)
+wait = WebDriverWait(browser, 20)
 
 client = pymongo.MongoClient(MONGODB_HOST, MONGODB_PORT)
 db = client[MONGODB_DB]
@@ -31,7 +31,10 @@ collection = db[MONGODB_COLLECTION]
 def login():
     print("正在登录")
     # 需要用手机淘宝扫二维码登录才能搜索
-    browser.get(url='https://login.taobao.com')
+    browser.get(
+        url=
+        'https://account.dianping.com/login?redir=http%3A%2F%2Fwww.dianping.com%2F'
+    )
     # 10s用来扫码登录
     # browser.implicitly_wait(200)
     time.sleep(10)
@@ -39,19 +42,25 @@ def login():
 
 def search(KEYWORD):
     print("正在查找", KEYWORD)
+    browser.refresh()
+    original_window = browser.current_window_handle
+    assert len(browser.window_handles) == 1
     try:
         input = wait.until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "#q")))
+            EC.presence_of_element_located(
+                (By.CSS_SELECTOR, "#J-search-input")))
         submit = wait.until(
-            EC.element_to_be_clickable(
-                (By.CSS_SELECTOR,
-                 "#J_TSearchForm > div.search-button > button")))
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "#J-all-btn")))
         input.send_keys(KEYWORD)
         submit.click()
+        wait.until(EC.number_of_windows_to_be(2))
+        for window_handle in browser.window_handles:
+            if window_handle != original_window:
+                browser.switch_to.window(window_handle)
+                break
         total = wait.until(
             EC.presence_of_element_located(
-                (By.CSS_SELECTOR,
-                 "#mainsrp-pager > div > div > div > div.total")))
+                (By.CSS_SELECTOR, ".page a:nth-last-child(2)")))
         get_goods()
         return total.text
     except TimeoutError:
@@ -86,22 +95,26 @@ def get_goods():
     try:
         wait.until(
             EC.presence_of_element_located(
-                (By.CSS_SELECTOR, '#mainsrp-itemlist .items .item')))
+                (By.CSS_SELECTOR, '#shop-all-list ul li')))
         html = browser.page_source
         doc = pq(html)
-        items = doc('#mainsrp-itemlist .items .item').items()
+        items = doc('#shop-all-list ul li .si-deal.d-packup').items()
         for item in items:
-            goods = {
-                'pid': item.find('.pic .img').attr('id').split('_')[-1],
-                'img': item.find('.pic .img').attr('data-src'),
-                'price': item.find('.price').text().replace('\n', ' '),
-                'deal': item.find('.deal-cnt').text(),
-                'title': item.find('.title').text().replace('\n', ''),
-                'shop': item.find('.shop').text(),
-                'location': item.find('.location').text(),
-                'crawl_date': datetime.today().strftime('%Y-%m-%d')
-            }
-            save_to_mongodb(goods)
+            for a in item.find('a').not_('.more'):
+                res = doc(a)
+                if '伊婉' in res.text():
+                    print(res.attr('href'), res.text())
+            # goods = {
+            #     'pid': item.find('.pic .img').attr('id').split('_')[-1],
+            #     'img': item.find('.pic .img').attr('data-src'),
+            #     'price': item.find('.price').text().replace('\n', ' '),
+            #     'deal': item.find('.deal-cnt').text(),
+            #     'title': item.find('.title').text().replace('\n', ''),
+            #     'shop': item.find('.shop').text(),
+            #     'location': item.find('.location').text(),
+            #     'crawl_date': datetime.today().strftime('%Y-%m-%d')
+            # }
+            # save_to_mongodb(goods)
     except Exception:
         print("获取商品失败")
 
@@ -127,18 +140,18 @@ def out_to_csv(date, file):
 def main():
     _path = r"E:\玻尿酸销售情况"
     today = datetime.today().strftime('%Y-%m-%d')
-    file = f'{_path}/{today}{KEYWORD}天猫销售情况.csv'
+    file = f'{_path}/{today}{KEYWORD}点评销售状况.csv'
     login()
-    search(KEYWORD)
-    total = 12
+    total = int(search(KEYWORD))
+    print(total)
     for i in range(2, total):
         if i % 3 == 0:
             time.sleep(random.randint(1, 20))
         next_page(i)
 
-    out_to_csv(today, file)
+    # out_to_csv(today, file)
 
-    browser.quit()
+    # browser.quit()
 
 
 if __name__ == '__main__':

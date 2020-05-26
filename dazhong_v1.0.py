@@ -18,17 +18,18 @@ client = pymongo.MongoClient(MONGODB_HOST, MONGODB_PORT)
 db = client[DAZHONG_DB]
 collection = db[DAZHONG_COLLECTION]
 
-chrome_options = webdriver.ChromeOptions()
-chrome_options.add_argument('--log-level=3')
-chrome_options.add_experimental_option('excludeSwitches',
-                                       ['enable-automation'])
-driver = webdriver.Chrome(options=chrome_options)
+# chrome_options = webdriver.ChromeOptions()
+# chrome_options.add_argument('--log-level=3')
+# chrome_options.add_experimental_option('excludeSwitches',
+#                                        ['enable-automation'])
+# driver = webdriver.Chrome(options=chrome_options)
 
-driver.get("http://www.dianping.com/ningbo")
-cookies = driver.get_cookies()
-my_cookie = {el['name']: el['value'] for el in cookies}
-print(my_cookie)
-driver.quit()
+# driver.get("https://account.dianping.com/login")
+# time.sleep(10)
+# cookies = driver.get_cookies()
+# my_cookie = {el['name']: el['value'] for el in cookies}
+# print(my_cookie)
+# driver.quit()
 
 headers = {
     'Connection': 'keep-alive',
@@ -36,18 +37,26 @@ headers = {
     'Upgrade-Insecure-Requests': '1',
     'User-Agent':
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
-            (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36',
+            (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36'                                                                                                                                                                                                         ,
     'DNT': '1',
+    'Host': 'www.dianping.com',
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'none',
+    'Sec-Fetch-User': '?1',
+    'Upgrade-Insecure-Requests': '1',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,\
-            image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+            image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3'                                                                                                                                                                                                                                       ,
     'Accept-Encoding': 'gzip, deflate, br',
     'Accept-Language': 'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
 }
 
+Cookie = 'cy=11; cye=ningbo; _lxsdk_cuid=171e7bdd080c8-08f1315d6ee0b3-71657d60-1fa400-171e7bdd080c8; _lxsdk=171e7bdd080c8-08f1315d6ee0b3-71657d60-1fa400-171e7bdd080c8; _hc.v=7be34015-5935-6418-2a07-605288936e09.1588730909; t_lxid=171e7bdd0b81b-0067f6fc1ca743-71657d60-1fa400-171e7bdd0b9c8-tid; td_cookie=3584867761; ua=sixinfive; s_ViewType=10; fspop=test; lgtoken=07b0e3344-868f-449b-a23c-b933b74ce6c7; dplet=3348b93f1071559b7ee40273395c842f; dper=745d6063094fa2ad38488a38fbf15a517fcd28fbbe051a933d6cba9b272e993d080916577f0b46c680651ea3bf7422044b8c4676835b1539cda288381b3a6bc511f421974b7ad7111d9fab7e4007f72c028c6ab8babfe7e3223396248a5d27ad; ll=7fd06e815b796be3df069dec7836c3df; ctu=ae68056abd6e8c0288d77d0f8cda7c3791d4c6b09fd31b55fa9e832b5a9b0de4; _lxsdk_s=17210c63291-cf5-704-4b9%7C%7C16'
 
-def get_link(cityid=1):
-    flag = True
-    page = 1
+
+def get_link(cityid: int = 1):
+    flag: bool = True
+    page: int = 1
     while flag:
         try:
             print(f'>>> 开始爬取列表，城市ID是{cityid}, 第{page}页 ...')
@@ -56,7 +65,7 @@ def get_link(cityid=1):
                 f'https://www.dianping.com/search/keyword/{cityid}' +
                 f'/0_{KEYWORD}/p{page}',
                 headers=headers,
-                cookies=my_cookie)
+                cookies=Cookie)
         except Exception:
             get_link(page)
         page += 1
@@ -80,10 +89,11 @@ def get_link(cityid=1):
 
 
 # https://g.dianping.com/fuse/HktMNFLCM?pf=dppc&productid=3829715&shopid=58387941
-def get_detail(url):
+def get_detail(url: str):
     try:
         time.sleep(random.randint(1, 4))
-        response = requests.get(url, headers=headers, cookies=my_cookie)
+        url: str = f'https://www.dianping.com/node/universe-sku/advance/product-detail?{url.split("?")[1]}'
+        response = requests.get(url, headers=headers, cookies=Cookie)
     except Exception:
         get_detail(url)
     if 'm.dianping.com' in response.url:
@@ -107,7 +117,7 @@ def get_detail(url):
         # return info
 
 
-def get_el(tree, rule):
+def get_el(tree: etree, rule: str):
     node = tree.xpath(rule)
     if node:
         return node
@@ -115,7 +125,7 @@ def get_el(tree, rule):
         raise Exception("Node can't find")
 
 
-def save_to_mongodb(result):
+def save_to_mongodb(result: dict):
     try:
         res = collection.update_one({"link": result["link"]}, {"$set": result},
                                     upsert=True)
@@ -125,7 +135,7 @@ def save_to_mongodb(result):
         print(">>> 存储到数据库失败")
 
 
-def out_to_csv(date, file):
+def out_to_csv(date: str, file: str):
     df = pd.DataFrame(collection.find())
     df = df[df['crawl_date'] == date][[
         'addr', 'crawl_date', 'hospital_name', 'link', 'phone', 'price',
