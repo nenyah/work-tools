@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 '''
-Description: HN爬虫
+Description: 
 Author: Steven
-Date: 2019-07-09 13:38:08
+Date: 2020-08-06 11:32:27
 LastEditors: Steven
-LastEditTime: 2020-09-29 09:17:14
+LastEditTime: 2020-09-29 09:17:41
 '''
 
 import io
-import re
 import sys
 from typing import Generator, List, Optional
 
@@ -25,21 +24,19 @@ class Post:
     :param points: 当前得分
     :param comments_cnt: 评论数
     """
-
-    def __init__(self, title: str, link: str, points: str, comments_cnt: str):
+    def __init__(self, title: str, link: str, pub_time: str):
         self.title = title
         self.link = link
-        self.points = int(points)
-        self.comments_cnt = int(comments_cnt)
+        self.pub_time = pub_time
 
 
-class HNTopPostsSpider:
-    """抓取 HackerNews Top 内容条目
+class BLNewsPostsSpider:
+    """抓取 北仑新闻 内容条目
 
     :param limit: 限制条目数，默认为 5
     :param filter_by_link_keywords: 过滤结果的关键词列表，默认为 None 不过滤
     """
-    ITEMS_URL = 'https://wolley.io/'
+    ITEMS_URL = 'http://blnews.cnnb.com.cn/xwzx/bdxw/'
 
     def __init__(self,
                  limit: int = 5,
@@ -48,33 +45,28 @@ class HNTopPostsSpider:
         self.filter_by_link_keywords = filter_by_link_keywords
 
     def fetch(self) -> Generator[Post, None, None]:
-        """从 HN 抓取 Top 内容
+        """从 北仑新闻 抓取内容
         """
         resp = requests.get(self.ITEMS_URL)
-
+        resp.encoding = 'gb2312'
         # 使用 XPath 可以方便的从页面解析出你需要的内容，以下均为页面解析代码
         # 如果你对 xpath 不熟悉，可以忽略这些代码，直接跳到 yield Post() 部分
-        html = etree.HTML(resp.text)
-        items = html.xpath('//*[@class="news-item"]/div[@class="item-text"]')
+        html = etree.HTML(resp.content)
+        items = html.xpath('//td[@class="text4"]/a')
         counter = 0
         for item in items:
             if counter >= self.limit:
                 break
-            node_title = item.xpath('./span[@class="title"]/a')[0]
-            points_text = item.xpath('.//span[@class="by"]/text()')
-            comments_text = item.xpath(
-                './/span[@class="comments-link"]/a/text()')[0]
-            post = Post(
-                title=node_title.text,
-                link=node_title.get('href'),
-                # 条目可能会没有评分
-                points=re.findall("\d+", points_text[0])[0] if points_text else '0',
-                comments_cnt=re.findall("\d+", comments_text)[0] if "前往讨论" not in comments_text else '0')
+            node_title = item.text
+            link = item.get('href')
+            pub_time = '-'.join(link.split('/')[2:5])
+
+            post = Post(title=node_title, link=link, pub_time=pub_time)
             if self.filter_by_link_keywords is None:
                 counter += 1
                 yield post
             # 当 link 中出现任意一个关键词时，返回结果
-            elif any(keyword in post.link
+            elif any(keyword in post.title.lower()
                      for keyword in self.filter_by_link_keywords):
                 counter += 1
                 yield post
@@ -86,17 +78,17 @@ def write_posts_to_file(posts: List[Post], fp: io.TextIOBase, title: str):
     fp.write(f'# {title}\n\n')
     for i, post in enumerate(posts, 1):
         fp.write(f'> TOP {i}: {post.title}\n')
-        fp.write(f'> 分数：{post.points} 评论数：{post.comments_cnt}\n')
+        fp.write(f'> 发布时间：{post.pub_time}\n')
         fp.write(f'> 地址：{post.link}\n')
         fp.write('------\n')
 
 
 def main():
-    link_keywords = ['sspai.com', 'qq.com']
-    crawler = HNTopPostsSpider(filter_by_link_keywords=link_keywords)
+    link_keywords = None
+    crawler = BLNewsPostsSpider(filter_by_link_keywords=link_keywords)
 
     posts = list(crawler.fetch())
-    file_title = 'Top news on HN'
+    file_title = 'Top news on Beilun News'
     write_posts_to_file(posts, sys.stdout, file_title)
 
 

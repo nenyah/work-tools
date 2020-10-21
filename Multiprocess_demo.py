@@ -15,8 +15,10 @@
 #     p.join()
 #     print('Child process end.')
 
+# import os
+# import random
+# import time
 # from multiprocessing import Pool
-# import os, time, random
 
 # def long_time_task(name):
 #     print('Run task %s (%s)...' % (name, os.getpid()))
@@ -52,8 +54,10 @@
 # print(output)
 # print('Exit code:', p.returncode)
 
+# import os
+# import random
+# import time
 # from multiprocessing import Process, Queue
-# import os, time, random
 
 # # 写数据进程执行的代码:
 # def write(q):

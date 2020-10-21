@@ -1,149 +1,168 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
-'''
-@Description: 美团数据采集
-@Author: Steven
-@Date: 2019-12-06 16:15:49
-@LastEditors: Steven
-@LastEditTime: 2019-12-09 09:08:06
-'''
-import csv
 import datetime
-import math
+from pathlib import Path
+from typing import List
 
-import requests
+import pandas as pd
+from lxml import etree
 from selenium import webdriver
-
-from cityid import hot_city_id as city_id
-
-KEYWORD = '伊婉'
-_path = r"E:\玻尿酸销售情况"
-today = datetime.date.today()
-file = f'{_path}/{today}{KEYWORD}美团销售情况.csv'
-
-chrome_options = webdriver.ChromeOptions()
-chrome_options.add_argument('--log-level=3')
-chrome_options.add_experimental_option(
-    'excludeSwitches', ['enable-automation'])
-driver = webdriver.Chrome(chrome_options=chrome_options)
+from selenium.webdriver.android.webdriver import WebDriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.wait import WebDriverWait
 
 
-driver.get("http://nb.meituan.com/")
-cookies = driver.get_cookies()
-my_cookies = {}
-for el in cookies:
-    my_cookies[el['name']] = el['value']
-print(my_cookies)
-driver.close()
+class MeituanItem:
+    city: str = ''
+    address: str = ''
+    price: int = -1
+    link: str = ''
+    hospital_name: str = ''
+    title: str = ''
 
-cookies = {
-    'uuid': '6f810ad1c4fb494aa841.1575594096.1.0.0',
-    '_lxsdk_cuid': '16ed8ba0341c8-087a97ce95c10c-7711b3e-1fa400-16ed8ba0341c8',
-    'ci': '1',
-    'rvct': '1',
-    '_lxsdk_s': '16eda194ea6-86e-255-e9d%7C%7C302',
-}
+    def __init__(self, link: str = '', hospital_name: str = '', title: str = '', price: int = -1, address: str = '',
+                 city: str = ''):
+        self.city = city
+        self.address = address
+        self.price = price
+        self.link = link
+        self.hospital_name = hospital_name
+        self.title = title
 
-headers = {
-    'Connection': 'keep-alive',
-    'Origin': 'https://bj.meituan.com',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
-    (KHTML, like Gecko) Chrome/78.0.3904.87 Safari/537.36',
-    'DNT': '1',
-    'Accept': '*/*',
-    'Sec-Fetch-Site': 'same-site',
-    'Sec-Fetch-Mode': 'cors',
-    'Referer': 'https://bj.meituan.com/s/%E4%BC%8A%E5%A9%89/',
-    'Accept-Encoding': 'gzip, deflate, br',
-    'Accept-Language': 'zh-CN,zh;q=0.9',
-}
+    @staticmethod
+    def keys():
+        """对象属性
+        Returns:
+            city,address,price,link,hospital_name,title
+        """
+        return 'city', 'address', 'price', 'link', 'hospital_name', 'title'
 
-LIMIT_NUM = 32
+    def __getitem__(self, key):
+        return getattr(self, key)
 
 
-def get_data(url: str, OFFSET: int = 0):
+class MeituanSpider:
+    """美团爬虫"""
+    base_url = 'https://bj.meituan.com/'
 
-    params = (
-        ('uuid', my_cookies['uuid']),
-        ('userid', '-1'),
-        ('limit', str(LIMIT_NUM)),
-        ('offset', str(OFFSET)),
-        ('cateId', '-1'),
-        ('q', '\u4F0A\u5A49'),
-    )
-    try:
-        web = requests.get(
-            url, headers=headers, params=params, cookies=my_cookies)
-        # print(web.url)
-        data = web.json()
-        print(len(data))
-        return url, data['data']
-    except Exception as e:
-        raise e
+    def __init__(self,
+                 limit: int = None,
+                 urls=None
+                 ):
+        """Constructor for MeituanSpider"""
+        if urls is None:
+            urls = {'北京': "https://bj.meituan.com/s/%E4%BC%8A%E5%A9%89/"}
+        self.urls = urls
+        self.limit = limit
+        self.page = 1
+        self.driver, self.wait = MeituanSpider.start_client()
+        self.items = []
+
+    def run(self):
+        """运行爬虫
+        """
+        for city, url in self.urls.items():
+            self.fetch(city, url)
+            self.page = 1
+
+    def fetch(self, city: str, url: str):
+        """从美团抓取伊婉内容
+        """
+        try:
+            print(f">>> 下载{url}， 第{self.page}页...")
+            if self.page == 1:
+                self.driver.get(url)
+        except Exception:
+            print(f"下载{url},第{self.page}页，失败")
+            self.fetch(city, url)
+        self.page += 1
+
+        html = etree.HTML(self.driver.page_source)
+        items = html.xpath('//*[contains(@class,"default-list-item")]')
+        is_active = html.xpath('//li[contains(@class,"pagination-item next-btn active")]')
+        for item in items:
+            hospital_name = item.xpath('.//a[@class="link item-title"]/text()')
+            address = item.xpath('.//span[contains(@class,"address")]/text()')
+            products = item.xpath('.//*[@class="deal-wrapper"]/a')
+
+            if products:
+                for product in products:
+                    title = ''.join(product.xpath('./div[@class="deal-title"]//text()'))
+                    if '伊婉' in title:
+                        item = MeituanItem(
+                            hospital_name=hospital_name[0],
+                            address=address[0],
+                            link=product.xpath('./@href')[0],
+                            title=''.join(product.xpath('./div[@class="deal-title"]//text()')),
+                            price=product.xpath('.//span[@class="deal-price"]//text()')[-1],
+                            city=city
+                        )
+                        self.items.append(item)
+        if is_active:
+            self.next_page(self.wait)
+            self.fetch(city, url)
+
+    @staticmethod
+    def next_page(driver_wait: WebDriverWait):
+        """翻页
+        Args:
+            wait WebDriverWait
+        """
+        next_page_node = driver_wait.until(
+            EC.element_to_be_clickable((By.XPATH, '//a[contains(@class,"right-arrow")]')))
+        next_page_node.click()
+
+    @staticmethod
+    def start_client() -> (WebDriver, WebDriverWait):
+        """开启selenium
+        Returns:
+            chrome_driver WebDriver
+            driver_wait WebDriverWait
+        """
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument('--log-level=3')
+        chrome_options.add_experimental_option('excludeSwitches',
+                                               ['enable-automation'])
+        chrome_driver = webdriver.Chrome(options=chrome_options)
+        chrome_driver.start_client()
+        driver_wait = WebDriverWait(chrome_driver, 10)
+        chrome_driver.get(MeituanSpider.base_url)
+        return chrome_driver, driver_wait
 
 
-def parse_total(data):
-    if data is None:
-        raise 'None error'
-    return data['totalCount']
-
-
-def parse_data(data):
-    if data is None:
-        raise 'None error'
-
-    items = data['searchResult']
-    for item in items:
-        print(item)
-        if item['deals']:
-            for deal in item['deals']:
-                if '伊婉' in deal['title']:
-                    info = {
-                        'link':
-                            'https://www.meituan.com/jiankangliren/' + str(
-                                item['id']),
-                        'hospital_name':
-                            item['title'],
-                        'title':
-                            deal['title'],
-                        'price':
-                            deal['price'],
-                        'address':
-                            item['address'],
-                        'city':
-                            item['city']
-                    }
-                    yield info
+def write_posts_to_file(posts: List[MeituanItem], file: str):
+    """负责将帖子列表写入文件
+    """
+    df = pd.DataFrame(dict(post) for post in posts)
+    print(df.head())
+    df.to_csv(file, index=False)
 
 
 def main():
-    # 1. 根据city_id 生成url
-    urls = (f'http://apimobile.meituan.com/group/v4/poi/pcsearch/{cid}/'
-            for cid in sorted(city_id.keys()))
-
-    # 6. 存储数据
-    with open(file, "w", newline='', encoding='utf-8') as csvfile:
-        fieldnames = [
-            'link', 'hospital_name', 'title', 'price', 'address', 'city'
-        ]
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-
-        writer.writeheader()
-        for url in urls:
-            print(f'开始抓取 {url}')
-            # 2. 获取total_count
-            url, data = get_data(url)
-            total = parse_total(data)
-            page = math.ceil(total / LIMIT_NUM)
-            for p in range(page+1):
-                # 4. 获取更新数据
-                url, data = get_data(url, p*LIMIT_NUM)
-                print(len(data))
-                # 5. 解析数据
-                for el in parse_data(data):
-                    print(el)
-                    writer.writerow(el)
+    _path = Path(r"E:\玻尿酸销售情况")
+    today = datetime.date.today()
+    urls = {
+        '北京': "https://bj.meituan.com/s/%E4%BC%8A%E5%A9%89/",
+        '上海': "https://sh.meituan.com/s/%E4%BC%8A%E5%A9%89/",
+        '广州': "https://gz.meituan.com/s/%E4%BC%8A%E5%A9%89/",
+        '深圳': "https://sz.meituan.com/s/%E4%BC%8A%E5%A9%89/",
+        '天津': "https://tj.meituan.com/s/%E4%BC%8A%E5%A9%89/",
+        '西安': "https://xa.meituan.com/s/%E4%BC%8A%E5%A9%89/",
+        '重庆': "https://cq.meituan.com/s/%E4%BC%8A%E5%A9%89/",
+        '杭州': "https://hz.meituan.com/s/%E4%BC%8A%E5%A9%89/",
+        '南京': "https://nj.meituan.com/s/%E4%BC%8A%E5%A9%89/",
+        '武汉': "https://wh.meituan.com/s/%E4%BC%8A%E5%A9%89/",
+        '成都': "https://cd.meituan.com/s/%E4%BC%8A%E5%A9%89/",
+    }
+    mt = MeituanSpider(urls=urls)
+    mt.run()
+    posts = mt.items
+    file_title = '美团伊婉销售数据'
+    file = _path / f'{today}{file_title}.csv'
+    write_posts_to_file(posts, file)
+    mt.driver.close()
+    print("所有爬虫执行完毕!")
 
 
 if __name__ == '__main__':

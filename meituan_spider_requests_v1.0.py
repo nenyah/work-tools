@@ -12,10 +12,11 @@ import datetime
 import math
 
 import requests
-# from selenium import webdriver
 
 from cityid import hot_city_id as city_id
 from config import KEYWORD
+
+# from selenium import webdriver
 
 _path = r"E:\玻尿酸销售情况"
 today = datetime.date.today()
@@ -84,13 +85,13 @@ def get_data(url: str, OFFSET: int = 0):
 
 def parse_total(data: dict):
     if data is None:
-        raise 'None error'
+        raise Exception('None error')
     return int(data['totalCount'])
 
 
 def parse_data(data: dict):
     if data is None:
-        raise 'None error'
+        raise Exception('None error')
 
     items = data['searchResult']
     for item in items:

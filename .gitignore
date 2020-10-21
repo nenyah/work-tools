@@ -6,14 +6,12 @@ node_modules/
 *.pdf
 *.png
 *.swp
+*.csv
 
 package-lock.json
 settings.json
 
 debug.log
 demo.py
-
-
 config.py
-sina.csv
 

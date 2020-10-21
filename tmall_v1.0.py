@@ -40,13 +40,13 @@ def login():
 def search(KEYWORD):
     print("正在查找", KEYWORD)
     try:
-        input = wait.until(
+        input_node = wait.until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "#q")))
         submit = wait.until(
             EC.element_to_be_clickable(
                 (By.CSS_SELECTOR,
                  "#J_TSearchForm > div.search-button > button")))
-        input.send_keys(KEYWORD)
+        input_node.send_keys(KEYWORD)
         submit.click()
         total = wait.until(
             EC.presence_of_element_located(
@@ -55,22 +55,22 @@ def search(KEYWORD):
         get_goods()
         return total.text
     except TimeoutError:
-        return search()
+        return search(KEYWORD)
 
 
 def next_page(page_number):
     print("正在换页", page_number)
     submit_pat = "#mainsrp-pager > div > div > div > div.form > span.btn.J_Submit"
     try:
-        input = wait.until(
+        input_node = wait.until(
             EC.presence_of_element_located(
                 (By.CSS_SELECTOR,
                  "#mainsrp-pager > div > div > div > div.form > input")))
 
         submit = wait.until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, submit_pat)))
-        input.clear()
-        input.send_keys(page_number)
+        input_node.clear()
+        input_node.send_keys(page_number)
         submit.click()
         wait.until(
             EC.text_to_be_present_in_element((

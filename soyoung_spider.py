@@ -21,7 +21,9 @@ def clean_text(text):
 
 
 class SoyoungSpider:
-    """docstring for SoyoungSpider"""
+    """新氧爬虫
+    :param keyword：关键词
+    """
     root = 'http://www.soyoung.com/searchNew/'
     product_url = root + r'product?cityId=1&page_size=100&_json=1&sort=0'
     hospital_url = root + r'hospital?cityId=1&page_size=100&_json=1&sort=0'

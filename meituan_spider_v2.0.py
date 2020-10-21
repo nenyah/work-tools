@@ -1,150 +1,168 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import datetime
+from pathlib import Path
+from typing import List
 
-'''
-@Description:
-@Author: Steven
-@Date: 2019-12-06 09:53:05
-@LastEditors  : Steven
-@LastEditTime : 2020-01-02 09:22:43
-'''
-import io
-import sys
-from typing import Generator, List
-
-import requests
+import pandas as pd
 from lxml import etree
 from selenium import webdriver
+from selenium.webdriver.android.webdriver import WebDriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.wait import WebDriverWait
 
 
-class MeiTuanItem:
-    """HN(https://bj.meituan.com/s/%E4%BC%8A%E5%A9%89/) 上的条目
+class MeituanItem:
+    city: str = ''
+    address: str = ''
+    price: int = -1
+    link: str = ''
+    hospital_name: str = ''
+    title: str = ''
 
-    :param hospital: 医院
-    :param link: 链接
-    :param title: 标题
-    :param price: 价格
-    :param address: 地址
-    :param city: 城市
-    """
-    def __init__(self, hospital: str, link: str, title: str, price: str,
-                 address: str, city: str):
-        self.hospital = hospital
-        self.link = link
-        self.title = title
-        self.price = float(price)
-        self.address = address
+    def __init__(self, link: str = '', hospital_name: str = '', title: str = '', price: int = -1, address: str = '',
+                 city: str = ''):
         self.city = city
-
-
-class ItemWriter:
-    """负责将帖子列表写入到文件
-    """
-    def __init__(self, fp: io.TextIOBase, title: str):
-        self.fp = fp
+        self.address = address
+        self.price = price
+        self.link = link
+        self.hospital_name = hospital_name
         self.title = title
 
-    def write(self, items: List[MeiTuanItem]):
-        self.fp.write(f'# {self.title}\n\n')
-        # enumerate 接收第二个参数，表示从这个数开始计数（默认为 0）
-        for i, item in enumerate(items, 1):
-            self.fp.write(f'> 医院 {i}: {item.hospital}\n')
-            self.fp.write(f'> 产品标题 {i}: {item.title} 价格：{item.price}\n')
-            self.fp.write(f'> 链接：{item.link}\n')
-            self.fp.write(f'> 地址： {item.address}\n')
-            self.fp.write('------\n')
+    @staticmethod
+    def keys():
+        """对象属性
+        Returns:
+            city,address,price,link,hospital_name,title
+        """
+        return 'city', 'address', 'price', 'link', 'hospital_name', 'title'
+
+    def __getitem__(self, key):
+        return getattr(self, key)
 
 
-class MTSpider:
-    """抓取 MEITUAN 内容条目
+class MeituanSpider:
+    """美团爬虫"""
+    base_url = 'https://bj.meituan.com/'
 
-    :param fp: 存储抓取结果的目标文件对象
-    :param limit: 限制条目数，默认为 5
-    """
-    ITEMS_URL = 'https://bj.meituan.com/s/%E4%BC%8A%E5%A9%89/'
-    FILE_TITLE = '美团伊婉'
-    HEADERS = {
-        'Connection': 'keep-alive',
-        'Cache-Control': 'max-age=0',
-        'DNT': '1',
-        'Upgrade-Insecure-Requests': '1',
-        'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
-            (KHTML, like Gecko) Chrome/78.0.3904.87 Safari/537.36',
-        'Sec-Fetch-User': '?1',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,\
-            image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
-        'Sec-Fetch-Site': 'same-site',
-        'Sec-Fetch-Mode': 'navigate',
-        'Referer': 'https://www.meituan.com/',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Accept-Language': 'zh-CN,zh;q=0.9',
-    }
-
-    def __init__(self, limit: int = 5):
+    def __init__(self,
+                 limit: int = None,
+                 urls=None
+                 ):
+        """Constructor for MeituanSpider"""
+        if urls is None:
+            urls = {'北京': "https://bj.meituan.com/s/%E4%BC%8A%E5%A9%89/"}
+        self.urls = urls
         self.limit = limit
-        self.cookies = self.get_cookie()
+        self.page = 1
+        self.driver, self.wait = MeituanSpider.start_client()
+        self.items = []
 
-    def fetch(self) -> Generator[MeiTuanItem, None, None]:
-        """从 MT 抓取 伊婉 内容
+    def run(self):
+        """运行爬虫
         """
-        resp = requests.get(self.ITEMS_URL,
-                            headers=self.HEADERS,
-                            cookies=self.cookies)
+        for city, url in self.urls.items():
+            self.fetch(city, url)
+            self.page = 1
 
-        print(resp.status_code)
-        # print(resp.text)
-        html = etree.HTML(resp.text)
-        items = html.xpath('//div[@class="list-item-desc-top"]')
+    def fetch(self, city: str, url: str):
+        """从美团抓取伊婉内容
+        """
+        try:
+            print(f">>> 下载{url}， 第{self.page}页...")
+            if self.page == 1:
+                self.driver.get(url)
+        except Exception:
+            print(f"下载{url},第{self.page}页，失败")
+            self.fetch(city, url)
+        self.page += 1
+
+        html = etree.HTML(self.driver.page_source)
+        items = html.xpath('//*[contains(@class,"default-list-item")]')
+        is_active = html.xpath('//li[contains(@class,"pagination-item next-btn active")]')
         for item in items:
-            node_title = item.xpath('./a')[0]
-            address_text = item.xpath(
-                './/span[@class="address ellipsis"]/text()')[0]
-            node_deal = item.xpath(
-                './following-sibling::div[2]//a[@class="link deal-content"]')
+            hospital_name = item.xpath('.//a[@class="link item-title"]/text()')
+            address = item.xpath('.//span[contains(@class,"address")]/text()')
+            products = item.xpath('.//*[@class="deal-wrapper"]/a')
 
-            for deal in node_deal:
-                title_text = deal.xpath(
-                    './/span[contains(@class,"hlt-span")]/text()')
-                price_text = deal.xpath(
-                    './/span[@class="deal-price"]/text()')[0]
+            if products:
+                for product in products:
+                    title = ''.join(product.xpath('./div[@class="deal-title"]//text()'))
+                    if '伊婉' in title:
+                        item = MeituanItem(
+                            hospital_name=hospital_name[0],
+                            address=address[0],
+                            link=product.xpath('./@href')[0],
+                            title=''.join(product.xpath('./div[@class="deal-title"]//text()')),
+                            price=product.xpath('.//span[@class="deal-price"]//text()')[-1],
+                            city=city
+                        )
+                        self.items.append(item)
+        if is_active:
+            self.next_page(self.wait)
+            self.fetch(city, url)
 
-                print(title_text, price_text)
-                yield MeiTuanItem(hospital=node_title.text,
-                                  link=node_title.get('href'),
-                                  title=''.join(title_text),
-                                  price=price_text,
-                                  address=address_text,
-                                  city='北京')
-
-    def write_to_file(self, fp: io.TextIOBase):
-        """以纯文本格式将 Item 内容写入文件
-        实例化参数文件对象 fp 被挪到了 write_to_file 方法中
+    @staticmethod
+    def next_page(driver_wait: WebDriverWait):
+        """翻页
+        Args:
+            wait WebDriverWait
         """
-        # 将文件写入逻辑托管给 ItemWriter 类处理
-        writer = ItemWriter(fp, title=self.FILE_TITLE)
-        writer.write(list(self.fetch()))
+        next_page_node = driver_wait.until(
+            EC.element_to_be_clickable((By.XPATH, '//a[contains(@class,"right-arrow")]')))
+        next_page_node.click()
 
-    def get_cookie(self) -> dict:
-        options = webdriver.ChromeOptions()
-        options.add_argument('--log-level=3')
-        options.add_experimental_option('excludeSwitches',
-                                        ['enable-automation'])
-        driver = webdriver.Chrome(options=options)
+    @staticmethod
+    def start_client() -> (WebDriver, WebDriverWait):
+        """开启selenium
+        Returns:
+            chrome_driver WebDriver
+            driver_wait WebDriverWait
+        """
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument('--log-level=3')
+        chrome_options.add_experimental_option('excludeSwitches',
+                                               ['enable-automation'])
+        chrome_driver = webdriver.Chrome(options=chrome_options)
+        chrome_driver.start_client()
+        driver_wait = WebDriverWait(chrome_driver, 10)
+        chrome_driver.get(MeituanSpider.base_url)
+        return chrome_driver, driver_wait
 
-        driver.get("http://nb.meituan.com/")
-        cookies = driver.get_cookies()
-        my_cookie = {el['name']: el['value'] for el in cookies}
-        print(my_cookie)
-        driver.close()
-        return my_cookie
+
+def write_posts_to_file(posts: List[MeituanItem], file: str):
+    """负责将帖子列表写入文件
+    """
+    df = pd.DataFrame(dict(post) for post in posts)
+    print(df.head())
+    df.to_csv(file, index=False)
 
 
 def main():
-
-    # 实现往控制台标准输出打印的功能
-    crawler = MTSpider()
-    crawler.write_to_file(sys.stdout)
+    _path = Path(r"E:\玻尿酸销售情况")
+    today = datetime.date.today()
+    urls = {
+        '北京': "https://bj.meituan.com/s/%E4%BC%8A%E5%A9%89/",
+        '上海': "https://sh.meituan.com/s/%E4%BC%8A%E5%A9%89/",
+        '广州': "https://gz.meituan.com/s/%E4%BC%8A%E5%A9%89/",
+        '深圳': "https://sz.meituan.com/s/%E4%BC%8A%E5%A9%89/",
+        '天津': "https://tj.meituan.com/s/%E4%BC%8A%E5%A9%89/",
+        '西安': "https://xa.meituan.com/s/%E4%BC%8A%E5%A9%89/",
+        '重庆': "https://cq.meituan.com/s/%E4%BC%8A%E5%A9%89/",
+        '杭州': "https://hz.meituan.com/s/%E4%BC%8A%E5%A9%89/",
+        '南京': "https://nj.meituan.com/s/%E4%BC%8A%E5%A9%89/",
+        '武汉': "https://wh.meituan.com/s/%E4%BC%8A%E5%A9%89/",
+        '成都': "https://cd.meituan.com/s/%E4%BC%8A%E5%A9%89/",
+    }
+    mt = MeituanSpider(urls=urls)
+    mt.run()
+    posts = mt.items
+    file_title = '美团伊婉销售数据'
+    file = _path / f'{today}{file_title}.csv'
+    write_posts_to_file(posts, file)
+    mt.driver.close()
+    print("所有爬虫执行完毕!")
 
 
 if __name__ == '__main__':
