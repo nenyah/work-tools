@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 import datetime
 from pathlib import Path
-from typing import List
+import time
+from typing import List, Tuple
 
 import pandas as pd
 from lxml import etree
@@ -21,7 +22,12 @@ class MeituanItem:
     hospital_name: str = ''
     title: str = ''
 
-    def __init__(self, link: str = '', hospital_name: str = '', title: str = '', price: int = -1, address: str = '',
+    def __init__(self,
+                 link: str = '',
+                 hospital_name: str = '',
+                 title: str = '',
+                 price: int = -1,
+                 address: str = '',
                  city: str = ''):
         self.city = city
         self.address = address
@@ -44,12 +50,9 @@ class MeituanItem:
 
 class MeituanSpider:
     """美团爬虫"""
-    base_url = 'https://bj.meituan.com/'
+    base_url = 'https://passport.meituan.com/account/unitivelogin'
 
-    def __init__(self,
-                 limit: int = None,
-                 urls=None
-                 ):
+    def __init__(self, limit: int = None, urls=None):
         """Constructor for MeituanSpider"""
         if urls is None:
             urls = {'北京': "https://bj.meituan.com/s/%E4%BC%8A%E5%A9%89/"}
@@ -80,7 +83,8 @@ class MeituanSpider:
 
         html = etree.HTML(self.driver.page_source)
         items = html.xpath('//*[contains(@class,"default-list-item")]')
-        is_active = html.xpath('//li[contains(@class,"pagination-item next-btn active")]')
+        is_active = html.xpath(
+            '//li[contains(@class,"pagination-item next-btn active")]')
         for item in items:
             hospital_name = item.xpath('.//a[@class="link item-title"]/text()')
             address = item.xpath('.//span[contains(@class,"address")]/text()')
@@ -88,16 +92,19 @@ class MeituanSpider:
 
             if products:
                 for product in products:
-                    title = ''.join(product.xpath('./div[@class="deal-title"]//text()'))
+                    title = ''.join(
+                        product.xpath('./div[@class="deal-title"]//text()'))
                     if '伊婉' in title:
                         item = MeituanItem(
                             hospital_name=hospital_name[0],
                             address=address[0],
                             link=product.xpath('./@href')[0],
-                            title=''.join(product.xpath('./div[@class="deal-title"]//text()')),
-                            price=product.xpath('.//span[@class="deal-price"]//text()')[-1],
-                            city=city
-                        )
+                            title=''.join(
+                                product.xpath(
+                                    './div[@class="deal-title"]//text()')),
+                            price=product.xpath(
+                                './/span[@class="deal-price"]//text()')[-1],
+                            city=city)
                         self.items.append(item)
         if is_active:
             self.next_page(self.wait)
@@ -110,11 +117,12 @@ class MeituanSpider:
             wait WebDriverWait
         """
         next_page_node = driver_wait.until(
-            EC.element_to_be_clickable((By.XPATH, '//a[contains(@class,"right-arrow")]')))
+            EC.element_to_be_clickable(
+                (By.XPATH, '//a[contains(@class,"right-arrow")]')))
         next_page_node.click()
 
     @staticmethod
-    def start_client() -> (WebDriver, WebDriverWait):
+    def start_client() -> tuple((WebDriver, WebDriverWait)):
         """开启selenium
         Returns:
             chrome_driver WebDriver
@@ -122,12 +130,18 @@ class MeituanSpider:
         """
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument('--log-level=3')
+        chrome_options.add_argument('disble-gpu')
+        chrome_options.add_argument('blink-settings=imagesEnable=false')
+        chrome_options.add_argument(
+            '--user-data-dir=C:\\Users\\steven\\AppData\\Local\\Google\\Chrome\\User Data'
+        )
         chrome_options.add_experimental_option('excludeSwitches',
                                                ['enable-automation'])
         chrome_driver = webdriver.Chrome(options=chrome_options)
         chrome_driver.start_client()
         driver_wait = WebDriverWait(chrome_driver, 10)
         chrome_driver.get(MeituanSpider.base_url)
+        time.sleep(50)
         return chrome_driver, driver_wait
 
 
@@ -154,6 +168,7 @@ def main():
         '南京': "https://nj.meituan.com/s/%E4%BC%8A%E5%A9%89/",
         '武汉': "https://wh.meituan.com/s/%E4%BC%8A%E5%A9%89/",
         '成都': "https://cd.meituan.com/s/%E4%BC%8A%E5%A9%89/",
+        '宁波': "https://nb.meituan.com/s/%E4%BC%8A%E5%A9%89/",
     }
     mt = MeituanSpider(urls=urls)
     mt.run()
