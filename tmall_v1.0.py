@@ -18,11 +18,16 @@ from config import (MONGODB_COLLECTION, MONGODB_DB, MONGODB_HOST, MONGODB_PORT,
 
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument('--log-level=3')
+chrome_options.add_argument('disble-gpu')
+chrome_options.add_argument('blink-settings=imagesEnable=false')
+chrome_options.add_argument('--disable-blink-features=AutomationControlled')
+chrome_options.add_argument(
+    '--user-data-dir=C:\\Users\\steven\\AppData\\Local\\Google\\Chrome\\User Data'
+)
 chrome_options.add_experimental_option('excludeSwitches',
                                        ['enable-automation'])
 browser = webdriver.Chrome(options=chrome_options)
 wait = WebDriverWait(browser, 10)
-
 client = pymongo.MongoClient(MONGODB_HOST, MONGODB_PORT)
 db = client[MONGODB_DB]
 collection = db[MONGODB_COLLECTION]
@@ -32,6 +37,8 @@ def login():
     print("正在登录")
     # 需要用手机淘宝扫二维码登录才能搜索
     browser.get(url='https://login.taobao.com')
+    # 改变窗口宽度,不要最大化，会被反爬虫检测到
+    browser.set_window_size(1300, 800)
     # 10s用来扫码登录
     # browser.implicitly_wait(200)
     time.sleep(10)
