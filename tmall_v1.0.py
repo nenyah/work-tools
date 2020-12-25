@@ -3,6 +3,7 @@
 
 import random
 import time
+import re
 from datetime import datetime
 
 import pandas as pd
@@ -16,17 +17,22 @@ from selenium.webdriver.support.ui import WebDriverWait
 from config import (MONGODB_COLLECTION, MONGODB_DB, MONGODB_HOST, MONGODB_PORT,
                     KEYWORD)
 
-chrome_options = webdriver.ChromeOptions()
-chrome_options.add_argument('--log-level=3')
-chrome_options.add_argument('disble-gpu')
-chrome_options.add_argument('blink-settings=imagesEnable=false')
-chrome_options.add_argument('--disable-blink-features=AutomationControlled')
-chrome_options.add_argument(
-    '--user-data-dir=C:\\Users\\steven\\AppData\\Local\\Google\\Chrome\\User Data'
-)
-chrome_options.add_experimental_option('excludeSwitches',
-                                       ['enable-automation'])
-browser = webdriver.Chrome(options=chrome_options)
+opt = webdriver.ChromeOptions()
+opt.add_argument('--log-level=3')
+opt.add_argument('disble-gpu')
+opt.add_argument('blink-settings=imagesEnable=false')
+opt.add_argument('--disable-blink-features=AutomationControlled')
+opt.add_argument(
+    '--user-data-dir='
+    'C:\\Users\\steven\\AppData\\Local\\Google\\Chrome\\User Data')
+opt.add_experimental_option('excludeSwitches', ['enable-automation'])
+browser = webdriver.Chrome(options=opt)
+browser.execute_cdp_cmd(
+    "Page.addScriptToEvaluateOnNewDocument", {
+        "source":
+        """Object.defineProperty(navigator,
+        'webdriver', {get: () => undefined})""",
+    })
 wait = WebDriverWait(browser, 10)
 client = pymongo.MongoClient(MONGODB_HOST, MONGODB_PORT)
 db = client[MONGODB_DB]
@@ -57,22 +63,20 @@ def search(KEYWORD):
         submit.click()
         total = wait.until(
             EC.presence_of_element_located(
-                (By.CSS_SELECTOR,
-                 "#mainsrp-pager > div > div > div > div.total")))
+                (By.CSS_SELECTOR, "#mainsrp-pager div.total")))
         get_goods()
-        return total.text
+        return re.search(r'\d+', total.text).group()
     except TimeoutError:
         return search(KEYWORD)
 
 
 def next_page(page_number):
     print("正在换页", page_number)
-    submit_pat = "#mainsrp-pager > div > div > div > div.form > span.btn.J_Submit"
+    submit_pat = "#mainsrp-pager .btn.J_Submit"
     try:
         input_node = wait.until(
             EC.presence_of_element_located(
-                (By.CSS_SELECTOR,
-                 "#mainsrp-pager > div > div > div > div.form > input")))
+                (By.CSS_SELECTOR, "#mainsrp-pager input")))
 
         submit = wait.until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, submit_pat)))
@@ -80,10 +84,9 @@ def next_page(page_number):
         input_node.send_keys(page_number)
         submit.click()
         wait.until(
-            EC.text_to_be_present_in_element((
-                By.CSS_SELECTOR,
-                '#mainsrp-pager > div > div > div > ul > li.item.active > span'
-            ), str(page_number)))
+            EC.text_to_be_present_in_element(
+                (By.CSS_SELECTOR, '#mainsrp-pager li.item.active > span'),
+                str(page_number)))
         get_goods()
     except Exception:
         next_page(page_number)
@@ -136,8 +139,8 @@ def main():
     today = datetime.today().strftime('%Y-%m-%d')
     file = f'{_path}/{today}{KEYWORD}天猫销售情况.csv'
     login()
-    search(KEYWORD)
-    total = 12
+    total = search(KEYWORD)
+    total = int(total) if total else 12
     for i in range(2, total):
         if i % 3 == 0:
             time.sleep(random.randint(1, 20))
