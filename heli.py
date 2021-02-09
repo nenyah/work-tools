@@ -42,12 +42,12 @@ headers = {
 }
 
 
-def get_data(startNum):
+def get_data(start_num):
     params = (
         ('query', '\u4F0A\u5A49'),
         ('type', 'product'),
         ('hiddenCross', '1'),
-        ('start', str(startNum)),
+        ('start', str(start_num)),
         ('num', '50'),
     )
     url = 'https://search-api.helijia.com/search-api/search/item_query'
@@ -64,7 +64,7 @@ def get_data(startNum):
 
 def parse_data(data):
     if data is None:
-        raise 'None error'
+        raise Exception('None error')
     # res = re.sub(r' |\n', '', web)
     # res_json = json.loads(res)
     result = data["resultList"]
@@ -84,27 +84,27 @@ def parse_data(data):
 
 
 def main():
-    isEmpty = False
+    is_empty = False
     # 6. 存储数据
     with open(file, "w", newline='', encoding='utf-8') as csvfile:
         fieldnames = ['hospital', 'address', 'title', 'price', 'link']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
         writer.writeheader()
-        startNum = 0
-        while not isEmpty:
-            print(f'开始抓取 {startNum}到{startNum + 50}的内容')
+        start_num = 0
+        while not is_empty:
+            print(f'开始抓取 {start_num}到{start_num + 50}的内容')
             # 2. 获取数据
-            url, data = get_data(startNum)
+            url, data = get_data(start_num)
             if data['num'] != 0:
                 print(f'>>> 开始解析 {url} ...')
                 # 3. 解析数据
                 for el in parse_data(data):
                     print(el)
                     writer.writerow(el)
-                startNum += 50
+                start_num += 50
             else:
-                isEmpty = True
+                is_empty = True
 
 
 if __name__ == "__main__":

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-'''
+"""
 Description: HN爬虫
 Author: Steven
 Date: 2019-07-09 13:38:08
 LastEditors: Steven
 LastEditTime: 2020-09-29 09:17:14
-'''
+"""
 
 import io
 import re
@@ -68,8 +68,8 @@ class HNTopPostsSpider:
                 title=node_title.text,
                 link=node_title.get('href'),
                 # 条目可能会没有评分
-                points=re.findall("\d+", points_text[0])[0] if points_text else '0',
-                comments_cnt=re.findall("\d+", comments_text)[0] if "前往讨论" not in comments_text else '0')
+                points=re.findall(r"\d+", points_text[0])[0] if points_text else '0',
+                comments_cnt=re.findall(r"\d+", comments_text)[0] if "前往讨论" not in comments_text else '0')
             if self.filter_by_link_keywords is None:
                 counter += 1
                 yield post
